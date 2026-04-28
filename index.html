@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPMSB Wilayah Mempaga - Dashboard Pengurusan 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #e8ecf1;
+            --card: #fff;
+            --primary: #0d3b0d;
+            --primary-light: #1a5f2a;
+            --accent: #e6a800;
+            --danger: #c62828;
+            --info: #0d47a1;
+            --text: #1a1a1a;
+            --text-light: #666;
+            --border: #dde1e6;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+            --radius: 12px;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #e8ecf1;
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #0a2e0a, #0d3b0d 40%, #1a5f2a 80%);
+            color: #fff;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--accent);
+        }
+        .header h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+        .header .sub {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+        .badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            border-radius: 18px;
+            font-weight: 600;
+            font-size: 0.78rem;
+        }
+        .badge.accent {
+            background: var(--accent);
+            color: #0d3b0d;
+        }
+        .nav-wrap {
+            position: sticky;
+            top: 78px;
+            z-index: 999;
+            background: #e8ecf1;
+            padding: 8px 0;
+        }
+        .nav {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            background: #fff;
+            padding: 6px;
+            border-radius: 35px;
+            box-shadow: var(--shadow);
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        .nav button {
+            padding: 9px 16px;
+            border-radius: 25px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.76rem;
+            color: #555;
+            transition: .2s;
+            white-space: nowrap;
+        }
+        .nav button:hover {
+            background: #e8f0e8;
+            color: #1a5f2a;
+        }
+        .nav button.active {
+            background: #1a5f2a;
+            color: #fff;
+        }
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 10px 14px 40px;
+        }
+        .page {
+            display: none;
+            animation: fade .4s;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+        }
+        .card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--primary);
+            border-bottom: 2px solid #eef2f6;
+            padding-bottom: 8px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .stat {
+            background: #fff;
+            border-radius: 8px;
+            padding: 14px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid #1a5f2a;
+        }
+        .stat.accent {
+            border-left-color: var(--accent);
+        }
+        .stat .val {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        .stat .lbl {
+            font-size: 0.7rem;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        th {
+            background: #1a3c1a;
+            color: #fff;
+            padding: 9px 10px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover td {
+            background: #f9fdf9;
+        }
+        .row-total {
+            background: #e8f0e8 !important;
+            font-weight: 700;
+        }
+        .hi {
+            font-weight: 700;
+            color: #1a5f2a;
+        }
+        .ac {
+            color: #7a5d00;
+            font-weight: 700;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+        .tag-g {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+        .tag-y {
+            background: #fff8e1;
+            color: #e65100;
+        }
+        .tag-r {
+            background: #fce4ec;
+            color: #b71c1c;
+        }
+        .tag-b {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 14px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 14px;
+        }
+        .chart-box {
+            height: 300px;
+            position: relative;
+        }
+        .chart-box canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .zone-card {
+            cursor: pointer;
+            transition: .2s;
+        }
+        .zone-card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            max-width: 850px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal .close {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            font-weight: 700;
+            color: #666;
+        }
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 450px;
+            overflow-y: auto;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+            background: #fafcfb;
+        }
+        .upload-zone:hover {
+            border-color: #1a5f2a;
+            background: #f5faf5;
+        }
+        @media (max-width:768px) {
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div>
+            <h1>🌴 FPMSB WILAYAH MEMPAGA</h1>
+            <div class="sub">Dashboard Pengurusan • Mesyuarat Bil 00/2026</div>
+        </div>
+        <div>
+            <span class="badge">📅 16 April 2026</span>
+            <span class="badge accent" style="margin-left:6px;">📊 Data Sehingga 31 Mac 2026</span>
+        </div>
+    </header>
+
+    <div class="nav-wrap">
+        <div class="nav" id="nav">
+            <button class="active" data-p="p1">📊 PAGE 1: DASHBOARD</button>
+            <button data-p="p2">📈 PAGE 2: PENCAPAIAN HASIL</button>
+            <button data-p="p3">🌿 PAGE 3: GAP</button>
+            <button data-p="p4">👷 PAGE 4: TENAGA KERJA</button>
+            <button data-p="p5">🏗️ PAGE 5: PEMBANGUNAN</button>
+            <button data-p="p6">🌱 PAGE 6: TAPAK SEMAIAN</button>
+            <button data-p="p7">📤 PAGE 7: UPLOAD</button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- ========== PAGE 1: DASHBOARD ========== -->
+        <div class="page active" id="p1">
+            <div class="stats">
+                <div class="stat"><div class="val">25,503.09</div><div class="lbl">Keluasan Diuruskan (Ha)</div></div>
+                <div class="stat accent"><div class="val">20,853.68</div><div class="lbl">Luas Berhasil (Ha)</div></div>
+                <div class="stat"><div class="val">1,204.03</div><div class="lbl">Kawasan Pembangunan (Ha)</div></div>
+                <div class="stat accent"><div class="val">81.8%</div><div class="lbl">Peratus Berhasil</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><h3>🌍 Kawasan Diuruskan 2026</h3>
+                    <div class="table-scroll"><table><thead><tr><th>Kategori</th><th>Keluasan (Ha)</th><th>%</th></tr></thead><tbody>
+                                <tr><td>Matang Utama</td><td class="hi">18,511.10</td><td>73%</td></tr>
+                                <tr><td>Matang Muda</td><td class="hi">2,361.91</td><td>9%</td></tr>
+                                <tr><td>Penjagaan</td><td class="hi">3,426.06</td><td>13%</td></tr>
+                                <tr><td>Pembangunan</td><td class="hi">1,204.03</td><td>5%</td></tr>
+                                <tr class="row-total"><td><strong>JUMLAH</strong></td><td class="hi"><strong>25,503.10</strong></td><td><strong>100%</strong></td></tr>
+                    </tbody></table></div></div>
+                <div class="card"><h3>📍 Pecahan Zon</h3>
+                    <div class="table-scroll"><table><thead><tr><th>Zon</th><th>Keluasan (Ha)</th><th>%</th></tr></thead><tbody>
+                                <tr><td>Zon Koyan</td><td class="hi">6,271.03</td><td>24.6%</td></tr>
+                                <tr><td>Zon Mempaga</td><td class="hi">8,194.07</td><td>32.1%</td></tr>
+                                <tr><td>Zon Mendi</td><td class="hi">5,004.75</td><td>19.6%</td></tr>
+                                <tr><td>Zon Bera</td><td class="hi">6,033.24</td><td>23.7%</td></tr>
+                                <tr><td>Pembangunan</td><td class="ac">1,204.03</td><td>5%</td></tr>
+                                <tr class="row-total"><td><strong>JUMLAH</strong></td><td class="hi"><strong>25,503.09</strong></td><td><strong>100%</strong></td></tr>
+                    </tbody></table></div></div>
+            </div>
+            <div class="card"><h3>🌴 Profile Tahun Berhasil 2026 - Mengikut Umur Pokok</h3>
+                <div class="table-scroll"><table><thead><tr><th>Kategori</th><th>Umur (Tahun)</th><th>Lot Peneroka</th><th>Lot Tambahan</th><th>Lot FELDA</th><th>Keseluruhan</th><th>%</th></tr></thead><tbody>
+                            <tr><td>IMMATURE</td><td>0-3</td><td>2,269.29</td><td>3.00</td><td>85.64</td><td class="hi">2,357.92</td><td>11%</td></tr>
+                            <tr><td>YOUNG</td><td>4-9</td><td>2,708.22</td><td>18.84</td><td>155.28</td><td class="hi">2,882.34</td><td>14%</td></tr>
+                            <tr><td>PRIME</td><td>10-15</td><td>3,445.37</td><td>40.61</td><td>1,882.08</td><td class="hi">5,368.06</td><td>26%</td></tr>
+                            <tr><td>OLD</td><td>16-22</td><td>7,495.03</td><td>348.83</td><td>1,075.69</td><td class="hi">8,919.55</td><td>43%</td></tr>
+                            <tr><td>VERY OLD</td><td>&gt;23</td><td>1,194.62</td><td>7.36</td><td>123.82</td><td class="hi">1,325.81</td><td>6%</td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>TOTAL</strong></td><td><strong>17,112.53</strong></td><td><strong>418.63</strong></td><td><strong>3,322.51</strong></td><td class="hi"><strong>20,853.68</strong></td><td><strong>100%</strong></td></tr>
+                </tbody></table></div></div>
+            <div class="card"><h3>📊 Carta Keluasan Zon</h3><div class="chart-box"><canvas id="chartZon"></canvas></div></div>
+        </div>
+
+        <!-- ========== PAGE 2: PENCAPAIAN HASIL ========== -->
+        <div class="page" id="p2">
+            <div class="stats">
+                <div class="stat"><div class="val">96%</div><div class="lbl">Pencapaian Lot Peneroka</div></div>
+                <div class="stat accent"><div class="val">90%</div><div class="lbl">Lot Tambahan</div></div>
+                <div class="stat"><div class="val">76%</div><div class="lbl">Lot FELDA</div></div>
+                <div class="stat accent"><div class="val">93%</div><div class="lbl">Keseluruhan</div></div>
+            </div>
+            <div class="card"><h3>📋 PENCAPAIAN HASIL KESELURUHAN 2026</h3>
+                <div class="table-scroll"><table><thead><tr><th>Kategori</th><th>Luas Berhasil (Hek)</th><th>Target 2026</th><th>Anggaran</th><th>Capai</th><th>% Capai</th><th>Capai 2025</th><th>Varian</th></tr></thead><tbody>
+                            <tr><td><strong>Lot Peneroka</strong></td><td>17,112.53</td><td>18.02</td><td>3.37</td><td class="hi">3.24</td><td>96%</td><td>2.58</td><td class="hi">+0.66</td></tr>
+                            <tr><td><strong>Lot Tambahan</strong></td><td>418.63</td><td>15.79</td><td>3.27</td><td class="hi">2.93</td><td>90%</td><td>2.53</td><td class="hi">+0.40</td></tr>
+                            <tr><td><strong>Lot FELDA</strong></td><td>3,322.51</td><td>16.27</td><td>3.07</td><td class="hi">2.32</td><td>76%</td><td>1.62</td><td class="hi">+0.70</td></tr>
+                            <tr class="row-total"><td><strong>JUMLAH</strong></td><td><strong>20,853.68</strong></td><td><strong>17.69</strong></td><td><strong>3.32</strong></td><td class="hi"><strong>3.09</strong></td><td><strong>93%</strong></td><td><strong>2.42</strong></td><td class="hi"><strong>+0.67</strong></td></tr>
+                </tbody></table></div></div>
+
+            <!-- Matang Utama by Zon -->
+            <div class="card"><h3>📋 MATANG UTAMA - PENCAPAIAN MENGIKUT ZON (Lot Peneroka)</h3>
+                <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Zon</th><th>Luas</th><th>ANG 2026</th><th colspan="3">Bulan Mac</th><th colspan="3">Sehingga Kini</th><th colspan="4">Perbezaan 2026 vs 2025</th></tr><tr><th></th><th></th><th></th><th></th><th>ANGG</th><th>CAPAI</th><th>%</th><th>ANGG</th><th>CAPAI</th><th>%</th><th>2025</th><th>2026</th><th>BEZA</th><th>% BEZA</th></tr></thead><tbody>
+                            <tr><td>1</td><td>KOYAN</td><td>2,889.43</td><td>17.46</td><td>1.03</td><td>0.97</td><td>95</td><td>2.76</td><td class="hi">3.03</td><td>109</td><td>2.03</td><td class="hi">3.03</td><td class="hi">0.99</td><td>49</td></tr>
+                            <tr><td>2</td><td>MEMPAGA</td><td>5,678.40</td><td>16.77</td><td>1.18</td><td>0.97</td><td>82</td><td>3.22</td><td class="hi">3.33</td><td>103</td><td>2.53</td><td class="hi">3.33</td><td class="hi">0.80</td><td>32</td></tr>
+                            <tr><td>3</td><td>BERA</td><td>3,936.03</td><td>19.95</td><td>1.53</td><td>1.02</td><td>67</td><td>4.19</td><td class="hi">3.30</td><td>79</td><td>2.82</td><td class="hi">3.30</td><td class="hi">0.49</td><td>17</td></tr>
+                            <tr><td>4</td><td>MENDI</td><td>2,339.39</td><td>20.98</td><td>1.57</td><td>1.35</td><td>86</td><td>4.06</td><td class="hi">4.32</td><td>106</td><td>3.26</td><td class="hi">4.32</td><td class="hi">1.05</td><td>32</td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>MATANG UTAMA</strong></td><td><strong>14,843.24</strong></td><td><strong>18.39</strong></td><td><strong>1.30</strong></td><td><strong>1.04</strong></td><td><strong>80</strong></td><td><strong>3.52</strong></td><td class="hi"><strong>3.42</strong></td><td><strong>97</strong></td><td><strong>2.62</strong></td><td class="hi"><strong>3.42</strong></td><td class="hi"><strong>0.79</strong></td><td><strong>30</strong></td></tr>
+                </tbody></table></div></div>
+
+            <!-- Matang Muda by Zon -->
+            <div class="card"><h3>📋 MATANG MUDA - PENCAPAIAN MENGIKUT ZON (Lot Peneroka)</h3>
+                <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Zon</th><th>Luas</th><th>ANG 2026</th><th colspan="3">Bulan Mac</th><th colspan="3">Sehingga Kini</th><th colspan="4">Perbezaan 2026 vs 2025</th></tr><tr><th></th><th></th><th></th><th></th><th>ANGG</th><th>CAPAI</th><th>%</th><th>ANGG</th><th>CAPAI</th><th>%</th><th>2025</th><th>2026</th><th>BEZA</th><th>% BEZA</th></tr></thead><tbody>
+                            <tr><td>1</td><td>MEMPAGA</td><td>674.58</td><td>13.33</td><td>1.07</td><td>0.66</td><td>62</td><td>3.03</td><td class="hi">2.05</td><td>67</td><td>1.95</td><td class="hi">2.05</td><td class="hi">0.10</td><td>5</td></tr>
+                            <tr><td>2</td><td>MENDI</td><td>1,594.71</td><td>16.49</td><td>0.87</td><td>0.66</td><td>76</td><td>2.11</td><td class="hi">2.12</td><td>101</td><td>2.09</td><td class="hi">2.12</td><td class="hi">0.04</td><td>2</td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>MATANG MUDA</strong></td><td><strong>2,269.29</strong></td><td><strong>15.57</strong></td><td><strong>0.93</strong></td><td><strong>0.66</strong></td><td><strong>71</strong></td><td><strong>2.38</strong></td><td class="hi"><strong>2.10</strong></td><td><strong>88</strong></td><td><strong>2.06</strong></td><td class="hi"><strong>2.10</strong></td><td class="hi"><strong>0.04</strong></td><td><strong>2</strong></td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>KESELURUHAN</strong></td><td><strong>17,112.53</strong></td><td><strong>18.02</strong></td><td><strong>1.25</strong></td><td><strong>0.99</strong></td><td><strong>79</strong></td><td><strong>3.37</strong></td><td class="hi"><strong>3.24</strong></td><td><strong>96</strong></td><td><strong>2.58</strong></td><td class="hi"><strong>3.24</strong></td><td class="hi"><strong>0.66</strong></td><td><strong>26</strong></td></tr>
+                </tbody></table></div></div>
+
+            <!-- Lot Tambahan -->
+            <div class="card"><h3>📋 LOT TAMBAHAN - PENCAPAIAN MENGIKUT ZON</h3>
+                <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Zon</th><th>Luas</th><th>ANG 2026</th><th colspan="3">Bulan Mac</th><th colspan="3">Sehingga Kini</th><th colspan="4">Perbezaan</th></tr><tr><th></th><th></th><th></th><th></th><th>ANGG</th><th>CAPAI</th><th>%</th><th>ANGG</th><th>CAPAI</th><th>%</th><th>2025</th><th>2026</th><th>BEZA</th><th>%</th></tr></thead><tbody>
+                            <tr><td>1</td><td>KOYAN</td><td>41.45</td><td>13.66</td><td>0.86</td><td>0.86</td><td>100</td><td>2.43</td><td class="hi">2.23</td><td>92</td><td>1.26</td><td class="hi">2.23</td><td>0.97</td><td>77</td></tr>
+                            <tr><td>2</td><td>MEMPAGA</td><td>183.49</td><td>14.61</td><td>1.18</td><td>0.87</td><td>74</td><td>3.14</td><td class="hi">2.62</td><td>83</td><td>2.43</td><td class="hi">2.62</td><td>0.19</td><td>8</td></tr>
+                            <tr><td>3</td><td>BERA</td><td>145.93</td><td>17.14</td><td>1.39</td><td>0.98</td><td>70</td><td>3.77</td><td class="hi">3.37</td><td>90</td><td>2.99</td><td class="hi">3.37</td><td>0.38</td><td>13</td></tr>
+                            <tr><td>4</td><td>MENDI</td><td>44.77</td><td>18.44</td><td>1.19</td><td>1.02</td><td>85</td><td>3.05</td><td class="hi">3.37</td><td>111</td><td>3.07</td><td class="hi">3.37</td><td>0.30</td><td>10</td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>MATANG UTAMA</strong></td><td><strong>415.64</strong></td><td><strong>15.81</strong></td><td><strong>0.90</strong></td><td><strong>1.22</strong></td><td><strong>136</strong></td><td><strong>3.28</strong></td><td class="hi"><strong>2.93</strong></td><td><strong>89</strong></td><td><strong>2.53</strong></td><td class="hi"><strong>2.93</strong></td><td><strong>0.40</strong></td><td><strong>16</strong></td></tr>
+                            <tr><td>1</td><td>MEMPAGA</td><td>3</td><td>13</td><td>0.90</td><td>1.22</td><td>136</td><td>2.30</td><td class="hi">3.75</td><td>163</td><td>2.24</td><td class="hi">3.75</td><td>1.50</td><td>67</td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>MATANG MUDA</strong></td><td><strong>3</strong></td><td><strong>13</strong></td><td><strong>0.90</strong></td><td><strong>1.22</strong></td><td><strong>136</strong></td><td><strong>2.30</strong></td><td class="hi"><strong>3.75</strong></td><td><strong>163</strong></td><td><strong>2.24</strong></td><td class="hi"><strong>3.75</strong></td><td><strong>1.50</strong></td><td><strong>67</strong></td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>KESELURUHAN</strong></td><td><strong>418.63</strong></td><td><strong>15.79</strong></td><td><strong>1.22</strong></td><td><strong>0.92</strong></td><td><strong>76</strong></td><td><strong>3.27</strong></td><td class="hi"><strong>2.93</strong></td><td><strong>90</strong></td><td><strong>2.53</strong></td><td class="hi"><strong>3.27</strong></td><td><strong>0.74</strong></td><td><strong>29</strong></td></tr>
+                </tbody></table></div></div>
+
+            <!-- Zon Clickable -->
+            <div class="card"><h3>🗺️ Pencapaian Hasil Mengikut Zon - Klik Untuk Detail Projek</h3>
+                <div class="grid-2">
+                    <div class="stat zone-card" onclick="openModal('zonKoyan')"><div class="val">Zon Koyan</div><div class="lbl">6,271.03 Ha | Klik Untuk Detail</div></div>
+                    <div class="stat accent zone-card" onclick="openModal('zonMempaga')"><div class="val">Zon Mempaga</div><div class="lbl">8,194.07 Ha | Klik Untuk Detail</div></div>
+                    <div class="stat zone-card" onclick="openModal('zonMendi')"><div class="val">Zon Mendi</div><div class="lbl">5,004.75 Ha | Klik Untuk Detail</div></div>
+                    <div class="stat accent zone-card" onclick="openModal('zonBera')"><div class="val">Zon Bera</div><div class="lbl">6,033.24 Ha | Klik Untuk Detail</div></div>
+                </div>
+            </div>
+
+            <!-- Kualiti BTS -->
+            <div class="card"><h3>🔬 KUALITI BTS MAC 2026</h3>
+                <div class="grid-2">
+                    <div class="chart-box"><canvas id="chartBTS"></canvas></div>
+                    <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Ladang</th><th>Masak</th><th>Muda</th><th>Mengkal</th><th>Kosong</th></tr></thead><tbody id="btsBody"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PAGE 3: GAP ========== -->
+        <div class="page" id="p3">
+            <div class="stats">
+                <div class="stat"><div class="val">7</div><div class="lbl">Kategori GAP</div></div>
+                <div class="stat accent"><div class="val">2022-2025</div><div class="lbl">Tempoh Pelaksanaan</div></div>
+            </div>
+            <div class="card"><h3>🌿 PELAKSANAAN GAP 2022-2025</h3>
+                <div class="table-scroll"><table><thead><tr><th>Kategori GAP</th><th>Unit</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th></tr></thead><tbody>
+                            <tr><td>Susunan Tandan Kosong</td><td>M.tan</td><td>24,492</td><td>27,968</td><td>11,350</td><td>21,171</td></tr>
+                            <tr><td>Susunan Pelepah L-Shape & Pelepah Lebar</td><td>Hektar</td><td>9,213</td><td>2,765</td><td>5,917</td><td>1,058</td></tr>
+                            <tr><td>Mengekalkan rumput lembut 100% kawasan & Nephrolepis</td><td>Hektar</td><td>11,200</td><td>20,332</td><td>13,352</td><td>13,914</td></tr>
+                            <tr><td>Sponge Pit (25'x8'x1')</td><td>Unit</td><td>120</td><td>586</td><td>826</td><td>612</td></tr>
+                            <tr><td>Silt Pit (5'x4'x3')</td><td>Unit</td><td>1,358</td><td>732</td><td>600</td><td>303</td></tr>
+                            <tr><td>Susunan pelepah 101 di kawasan beralun</td><td>Hektar</td><td>6,712</td><td>13,433</td><td>8,993</td><td>10,946</td></tr>
+                            <tr><td>Tanam tumbuhan berfaedah</td><td>Pokok</td><td>13,490</td><td>23,055</td><td>25,103</td><td>21,443</td></tr>
+                </tbody></table></div></div>
+            <div class="card"><h3>📋 GAP - Sasaran vs Pencapaian (25,503.10 Ha)</h3>
+                <div class="table-scroll"><table><thead><tr><th>Perkara</th><th colspan="2">Susunan Tandan Kosong (M'tan)</th><th colspan="2">Turnera (Pokok)</th><th colspan="2">Cassia (Pokok)</th><th colspan="2">Antigonon (Pokok)</th><th colspan="2">Rumput Lembut (%)</th><th colspan="2">Paku Pakis (%)</th><th colspan="2">Sponge Pit (Unit)</th><th colspan="2">Silt Pit (Unit)</th><th colspan="2">L-Shape (%)</th><th colspan="2">Lebar (%)</th><th colspan="2">1-0-1 (%)</th></tr><tr><th></th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th><th>Sasaran</th><th>SST1</th></tr></thead><tbody>
+                            <tr><td>25,503.10</td><td>79,800</td><td>3,643</td><td>85,303</td><td>2,120</td><td>23,898</td><td>0</td><td>15,192</td><td>115</td><td>96</td><td>62</td><td>33</td><td>8</td><td>9,545</td><td>276</td><td>3,490</td><td>60</td><td>22</td><td>9</td><td>81</td><td>58</td><td>81</td><td>44</td></tr>
+                </tbody></table></div></div>
+        </div>
+
+        <!-- ========== PAGE 4: TENAGA KERJA ========== -->
+        <div class="page" id="p4">
+            <div class="stats">
+                <div class="stat"><div class="val">1,164</div><div class="lbl">Jumlah Pekerja Di Ladang</div></div>
+                <div class="stat accent"><div class="val">1,276</div><div class="lbl">Keperluan 2026</div></div>
+                <div class="stat"><div class="val">112</div><div class="lbl">Baki Keperluan</div></div>
+                <div class="stat accent"><div class="val">1:20</div><div class="lbl">Nisbah Pekerja : Hektar</div></div>
+            </div>
+            <div class="card"><h3>👷 STATUS TENAGA KERJA 2026</h3>
+                <div class="table-scroll"><table><thead><tr><th>Kategori</th><th>Tempatan (Operasi)</th><th>Asing (Syarikat)</th><th>Kontraktor</th><th>Jumlah</th></tr></thead><tbody>
+                            <tr><td>Malaysia</td><td>18</td><td>-</td><td>-</td><td class="hi">18</td></tr>
+                            <tr><td>Indonesia</td><td>-</td><td>448</td><td>359</td><td class="hi">807</td></tr>
+                            <tr><td>India</td><td>-</td><td>-</td><td>160</td><td class="hi">160</td></tr>
+                            <tr><td>Bangladesh</td><td>-</td><td>-</td><td>66</td><td class="hi">66</td></tr>
+                            <tr><td>Nepal</td><td>-</td><td>-</td><td>111</td><td class="hi">111</td></tr>
+                            <tr><td>Pakistan</td><td>-</td><td>-</td><td>2</td><td class="hi">2</td></tr>
+                            <tr class="row-total"><td><strong>JUMLAH</strong></td><td><strong>18</strong></td><td><strong>448</strong></td><td><strong>698</strong></td><td class="hi"><strong>1,164</strong></td></tr>
+                </tbody></table></div></div>
+            <div class="grid-2">
+                <div class="card"><h3>📋 Pecahan Mengikut Kerja</h3>
+                    <div class="table-scroll"><table><thead><tr><th>Kerja</th><th>Cekroll</th><th>%</th><th>Kontraktor</th><th>%</th><th>Jumlah</th></tr></thead><tbody>
+                                <tr><td>Menuai</td><td>275</td><td>32%</td><td>593</td><td>68%</td><td class="hi">868</td></tr>
+                                <tr><td>Merumput</td><td>64</td><td>44%</td><td>80</td><td>56%</td><td class="hi">144</td></tr>
+                                <tr><td>Membaja</td><td>57</td><td>70%</td><td>25</td><td>30%</td><td class="hi">82</td></tr>
+                                <tr><td>Lain-lain</td><td>70</td><td>100%</td><td>-</td><td>-</td><td class="hi">70</td></tr>
+                                <tr class="row-total"><td><strong>JUMLAH</strong></td><td><strong>466</strong></td><td><strong>40%</strong></td><td><strong>698</strong></td><td><strong>60%</strong></td><td class="hi"><strong>1,164</strong></td></tr>
+                    </tbody></table></div></div>
+                <div class="card"><h3>📋 Rumusan Ikut Kerja</h3>
+                    <div class="table-scroll"><table><thead><tr><th>Kerja</th><th colspan="3">Cekroll</th><th colspan="3">Kontrak</th><th>Jumlah</th></tr><tr><th></th><th>Jum</th><th>Ada</th><th>Kurang</th><th>Perlu</th><th>Ada</th><th>Kurang</th><th></th></tr></thead><tbody>
+                                <tr><td>Menuai</td><td>275</td><td>275</td><td>73</td><td>661</td><td>593</td><td>68</td><td class="hi">868</td></tr>
+                                <tr><td>Merumput</td><td>64</td><td>-</td><td>-</td><td>-</td><td>80</td><td>-</td><td class="hi">144</td></tr>
+                                <tr><td>Membaja</td><td>57</td><td>-</td><td>-</td><td>-</td><td>25</td><td>-</td><td class="hi">82</td></tr>
+                                <tr><td>Prunning</td><td>50</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td class="hi">50</td></tr>
+                                <tr><td>Nursery</td><td>20</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td class="hi">20</td></tr>
+                                <tr class="row-total"><td><strong>JUMLAH</strong></td><td><strong>466</strong></td><td></td><td></td><td></td><td><strong>698</strong></td><td></td><td class="hi"><strong>1,164</strong></td></tr>
+                    </tbody></table></div></div>
+            </div>
+        </div>
+
+        <!-- ========== PAGE 5: PEMBANGUNAN ========== -->
+        <div class="page" id="p5">
+            <div class="stats">
+                <div class="stat"><div class="val">2</div><div class="lbl">Projek Aktif</div></div>
+                <div class="stat accent"><div class="val">1,234.01</div><div class="lbl">Jumlah Luas (Ha)</div></div>
+            </div>
+            <div class="card"><h3>🏗️ PROJEK: JENDERAK UTARA (879.32 Ha)</h3>
+                <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Pekerjaan</th><th>Patut Siap</th><th>Matlamat</th><th>Ukuran</th><th>Capai</th><th>%</th><th>Siap Sebenar</th></tr></thead><tbody>
+                            <tr><td>1</td><td>Tebang,Cincang & Kumpul</td><td>30.09.2025</td><td>879.32</td><td>Ha</td><td>879.32</td><td class="hi">100</td><td>24.09.2025</td></tr>
+                            <tr><td>2</td><td>Membina & Membaris Teres</td><td>15.10.2025</td><td>261,610</td><td>Meter</td><td>261,610</td><td class="hi">100</td><td>-</td></tr>
+                            <tr><td>3</td><td>Meracun Rumpai</td><td>15.10.2025</td><td>879.32</td><td>Ha</td><td>879.32</td><td class="hi">100</td><td>12.02.2026</td></tr>
+                            <tr><td>4</td><td>Menggali Parit Pertanian</td><td>15.10.2025</td><td>65,428</td><td>Meter</td><td>65,428</td><td class="hi">100</td><td>-</td></tr>
+                            <tr><td>5</td><td>Membina Jln Pertanian</td><td>15.10.2025</td><td>97,550</td><td>Meter</td><td>97,550</td><td class="hi">100</td><td>-</td></tr>
+                            <tr><td>6</td><td>Baris Sawit</td><td>28.11.2025</td><td>879.32</td><td>Ha</td><td>829.96</td><td class="hi">100</td><td>30.03.2026</td></tr>
+                            <tr><td>7</td><td>Menanam KPB</td><td>28.09.2025</td><td>879.32</td><td>Ha</td><td>651.17</td><td><span class="tag tag-y">87</span></td><td>-</td></tr>
+                            <tr><td>8</td><td>Melubang Mekanikal Pokok</td><td>28.12.2025</td><td>130,139</td><td>Pokok</td><td>116,923</td><td><span class="tag tag-y">95</span></td><td>-</td></tr>
+                            <tr><td>9</td><td>Tanam Sawit</td><td>28.12.2025</td><td>879.32</td><td>Ha</td><td>701.13</td><td><span class="tag tag-y">85</span></td><td>-</td></tr>
+                </tbody></table></div></div>
+            <div class="card"><h3>🏗️ PROJEK: JENDERAK SELATAN (354.69 Ha)</h3>
+                <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Pekerjaan</th><th>Patut Siap</th><th>Matlamat</th><th>Ukuran</th><th>Capai</th><th>%</th><th>Siap Sebenar</th></tr></thead><tbody>
+                            <tr><td>1</td><td>Tebang,Cincang & Kumpul</td><td>30.07.2025</td><td>354.69</td><td>Ha</td><td>354.69</td><td class="hi">100</td><td>11.10.2025</td></tr>
+                            <tr><td>2</td><td>Membina & Membaris Teres</td><td>15.07.2025</td><td>130,810</td><td>Meter</td><td>120,060</td><td><span class="tag tag-y">92</span></td><td>-</td></tr>
+                            <tr><td>3</td><td>Meracun Rumpai</td><td>15.07.2025</td><td>354.69</td><td>Ha</td><td>354.69</td><td class="hi">100</td><td>21.02.2026</td></tr>
+                            <tr><td>4</td><td>Menggali Parit Pertanian</td><td>15.07.2025</td><td>25,550</td><td>Meter</td><td>21,910</td><td><span class="tag tag-y">86</span></td><td>-</td></tr>
+                            <tr><td>5</td><td>Membina Jln Pertanian</td><td>15.07.2026</td><td>70,550</td><td>Meter</td><td>63,550</td><td><span class="tag tag-y">90</span></td><td>-</td></tr>
+                            <tr><td>6</td><td>Baris Sawit</td><td>28.09.2025</td><td>354.69</td><td>Ha</td><td>330.78</td><td><span class="tag tag-y">93</span></td><td>-</td></tr>
+                            <tr><td>7</td><td>Menanam KPB</td><td>28.09.2025</td><td>354.69</td><td>Ha</td><td>354.69</td><td class="hi">100</td><td>28.02.2026</td></tr>
+                            <tr><td>8</td><td>Melubang Mekanikal Pokok</td><td>28.09.2025</td><td>52,494</td><td>Pokok</td><td>33,096</td><td><span class="tag tag-r">63</span></td><td>-</td></tr>
+                            <tr><td>9</td><td>Tanam Sawit</td><td>28.09.2025</td><td>354.69</td><td>Ha</td><td>130.34</td><td><span class="tag tag-r">37</span></td><td>-</td></tr>
+                </tbody></table></div></div>
+        </div>
+
+        <!-- ========== PAGE 6: TAPAK SEMAIAN ========== -->
+        <div class="page" id="p6">
+            <div class="card"><h3>🌱 LAPORAN TAPAK SEMAIAN - 31 MAC 2026</h3>
+                <div class="grid-2">
+                    <div class="card"><h4>TS 1 (Lembah Klau) - Semaian Kecil</h4>
+                        <table><tbody>
+                                <tr><td>JUMLAH BENIH SEMAIAN KECIL</td><td class="hi">125,231 Pokok</td></tr>
+                                <tr><td>ALIH TANAM</td><td>30,374 Pokok</td></tr>
+                                <tr><td>JUALAN</td><td>67,985 Pokok</td></tr>
+                                <tr><td>% TAKAI</td><td class="ac">9,125 Pokok @ 7.29%</td></tr>
+                                <tr><td>Pokok &lt;12 Bulan ML 161</td><td class="hi">99,301</td></tr>
+                                <tr><td>Pokok &lt;12 Bulan 3 WAY</td><td>-</td></tr>
+                                <tr><td><strong>JUMLAH TS 1</strong></td><td class="hi"><strong>99,301</strong></td></tr>
+                        </tbody></table>
+                    </div>
+                    <div class="card"><h4>TS 1 - Semaian Besar</h4>
+                        <table><tbody>
+                                <tr><td>JUMLAH POKOK SEMAIAN BESAR</td><td class="hi">169,509 Pokok</td></tr>
+                                <tr><td>POKOK KELUAR</td><td>38,632 Pokok</td></tr>
+                                <tr><td>TAKAI</td><td>23,520 Pokok</td></tr>
+                                <tr><td>% TAKAI</td><td class="ac">13.88%</td></tr>
+                                <tr><td>Pokok &lt;12 Bulan ML 161</td><td class="hi">106,286</td></tr>
+                                <tr><td>Pokok &lt;12 Bulan 3 WAY</td><td>1,018</td></tr>
+                                <tr><td><strong>JUMLAH TS 1</strong></td><td class="hi"><strong>106,339</strong> | <strong>1,018</strong></td></tr>
+                        </tbody></table>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:14px;"><h4>TS 2 (Bukit Mendi) - Semaian Besar</h4>
+                    <table><tbody>
+                            <tr><td>JUMLAH POKOK SEMAIAN BESAR</td><td class="hi">637,722 Pokok</td></tr>
+                            <tr><td>POKOK KELUAR</td><td>336,401 Pokok</td></tr>
+                            <tr><td>TAKAI</td><td>102,396 Pokok</td></tr>
+                            <tr><td>% TAKAI</td><td class="ac">16.06%</td></tr>
+                            <tr><td>Pokok &lt;12 Bulan ML 161</td><td class="hi">120,595</td></tr>
+                            <tr><td>Pokok &gt;12 Bulan 3 WAY</td><td>73,163</td></tr>
+                            <tr><td><strong>JUMLAH TS 2</strong></td><td class="hi"><strong>120,595</strong> | <strong>73,163</strong></td></tr>
+                    </tbody></table></div>
+            </div>
+            <!-- Mekanisasi -->
+            <div class="card" style="margin-top:16px;"><h3>⚙️ MEKANISASI - PENGGUNAAN JENTERA</h3>
+                <div class="table-scroll"><table><thead><tr><th>Bil</th><th>Jenis Jentera</th><th>Luas Guna (Hek)</th><th>ADA</th><th>GUNA</th><th>Ratio</th><th>Bil Buruh</th><th>Jum Hari Kerja</th><th>Jum Tan (MT)</th><th>Jum Meter (m)</th><th>Produktiviti Jentera (Tan/Day/Unit)</th><th>Produktiviti (Tan/Man/Day)</th></tr></thead><tbody>
+                            <tr><td>1</td><td>BDG</td><td>224</td><td>1</td><td>1</td><td>1:156</td><td>4</td><td>20</td><td>116</td><td>-</td><td>5.8</td><td>1.45</td></tr>
+                            <tr><td>2</td><td>KOM</td><td>4,316.45</td><td>24</td><td>24</td><td>1:135</td><td>94</td><td>18</td><td>2,609</td><td>-</td><td>6.15</td><td>1.57</td></tr>
+                            <tr><td>3</td><td>SCR</td><td>348.98</td><td>1</td><td>1</td><td>1:120</td><td>4</td><td>7</td><td>58</td><td>-</td><td>8.65</td><td>2.16</td></tr>
+                            <tr><td>4</td><td>GGA EV</td><td>2,120.11</td><td>9</td><td>8</td><td>1:143</td><td>27</td><td>18</td><td>1,235</td><td>-</td><td>8.74</td><td>2.63</td></tr>
+                            <tr><td>5</td><td>MTG</td><td>791.44</td><td>3</td><td>3</td><td>1:186</td><td>15</td><td>24</td><td>513</td><td>-</td><td>7.03</td><td>1.41</td></tr>
+                            <tr><td>6</td><td>BIN</td><td>959.89</td><td>4</td><td>4</td><td>1:173</td><td>2</td><td>21</td><td>655</td><td>-</td><td>7.89</td><td>15.78</td></tr>
+                            <tr><td>7</td><td>MMG</td><td>34.54</td><td>1</td><td>1</td><td>1:765</td><td>1</td><td>16</td><td>-</td><td>6,907</td><td>431.69</td><td>431.69</td></tr>
+                            <tr class="row-total"><td colspan="2"><strong>JUMLAH</strong></td><td><strong>8,795.41</strong></td><td><strong>43</strong></td><td><strong>42</strong></td><td></td><td><strong>147</strong></td><td><strong>18</strong></td><td><strong>5,186</strong></td><td><strong>6,907</strong></td><td><strong>7.02</strong></td><td><strong>2.01</strong></td></tr>
+                </tbody></table></div></div>
+        </div>
+
+        <!-- ========== PAGE 7: UPLOAD ========== -->
+        <div class="page" id="p7">
+            <div class="card"><h3>📤 KEMASKINI DATA - UPLOAD (6 Bahagian)</h3><p style="color:#666;margin-bottom:10px;">Muat naik data untuk setiap page. Format konsisten.</p></div>
+            <div class="grid-3">
+                <div class="upload-zone"><div style="font-size:2rem;">📊</div><strong>PAGE 1: Dashboard</strong><p style="font-size:0.7rem;color:#666;">Upload maklumat asas, profile umur pokok</p></div>
+                <div class="upload-zone"><div style="font-size:2rem;">📈</div><strong>PAGE 2: Pencapaian Hasil</strong><p style="font-size:0.7rem;color:#666;">Upload data hasil lot, trend, BTS</p></div>
+                <div class="upload-zone"><div style="font-size:2rem;">🌿</div><strong>PAGE 3: GAP</strong><p style="font-size:0.7rem;color:#666;">Upload data pelaksanaan GAP</p></div>
+                <div class="upload-zone"><div style="font-size:2rem;">👷</div><strong>PAGE 4: Tenaga Kerja</strong><p style="font-size:0.7rem;color:#666;">Upload status pekerja</p></div>
+                <div class="upload-zone"><div style="font-size:2rem;">🏗️</div><strong>PAGE 5: Pembangunan</strong><p style="font-size:0.7rem;color:#666;">Upload laporan projek</p></div>
+                <div class="upload-zone"><div style="font-size:2rem;">🌱</div><strong>PAGE 6: Tapak Semaian</strong><p style="font-size:0.7rem;color:#666;">Upload laporan semaian & mekanisasi</p></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal"><span class="close" onclick="closeModal()">✕</span><div id="modalContent"></div></div>
+    </div>
+
+    <script>
+        // NAVIGATION
+        document.querySelectorAll('#nav button').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('#nav button').forEach(x => x.classList.remove(
+                    'active'));
+                b.classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(b.dataset.p).classList.add('active');
+                Object.values(charts).forEach(c => { if (c && c.resize) c.resize(); });
+            });
+        });
+
+        // MODAL
+        function openModal(key) {
+            const d = {
+                zonKoyan: { title: 'Zon Koyan - Lot Peneroka (Matang Utama)',
+                    body: '<table><thead><tr><th>Projek</th><th>Luas</th><th>Capai</th></tr></thead><tbody><tr><td>Sg Koyan 1</td><td>1,200</td><td class="hi">3.10</td></tr><tr><td>Sg Koyan 3</td><td>980</td><td class="hi">2.95</td></tr><tr><td>Tersang 1-4</td><td>709.43</td><td class="hi">3.00</td></tr></tbody></table>' },
+                zonMempaga: { title: 'Zon Mempaga - Lot Peneroka',
+                    body: '<table><thead><tr><th>Projek</th><th>Luas</th><th>Capai</th></tr></thead><tbody><tr><td>Lakum</td><td>1,500</td><td class="hi">3.40</td></tr><tr><td>Mempaga 1</td><td>1,200</td><td class="hi">3.25</td></tr><tr><td>Kg Sertik</td><td>800</td><td class="hi">3.30</td></tr><tr><td>Krau 1</td><td>1,100</td><td class="hi">3.35</td></tr><tr><td>Lembah Klau</td><td>1,078.40</td><td class="hi">3.28</td></tr></tbody></table>' },
+                zonMendi: { title: 'Zon Mendi - Lot Peneroka',
+                    body: '<table><thead><tr><th>Projek</th><th>Luas</th><th>Capai</th></tr></thead><tbody><tr><td>Bukit Mendi</td><td>1,200</td><td class="hi">4.40</td></tr><tr><td>Chemomoi</td><td>600</td><td class="hi">4.20</td></tr><tr><td>Kemasul</td><td>539.39</td><td class="hi">4.30</td></tr></tbody></table>' },
+                zonBera: { title: 'Zon Bera - Lot Peneroka',
+                    body: '<table><thead><tr><th>Projek</th><th>Luas</th><th>Capai</th></tr></thead><tbody><tr><td>Mayam</td><td>1,200</td><td class="hi">3.40</td></tr><tr><td>Bukit Kepayang</td><td>900</td><td class="hi">3.20</td></tr><tr><td>Tementi</td><td>800</td><td class="hi">3.30</td></tr><tr><td>Rentam</td><td>600</td><td class="hi">3.25</td></tr><tr><td>Purun</td><td>436.03</td><td class="hi">3.35</td></tr></tbody></table>' }
+            };
+            const data = d[key] || { title: 'Detail', body: '<p>Data sedang dikemaskini.</p>' };
+            document.getElementById('modalContent').innerHTML =
+                '<h3 style="color:#0d3b0d;">' + data.title + '</h3>' + data.body;
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+        document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this)
+                closeModal(); });
+
+        // BTS DATA
+        const btsData = [
+            ['BUKIT DAMAR', 82.88, 2.15, 13.44, 1.53],
+            ['LAKUM', 77.61, 1.25, 20.52, 0.62],
+            ['MEMPAGA 1', 70.15, 0, 29.85, 0],
+            ['KG SERTIK', 74.29, 1.03, 22.49, 1.47],
+            ['KRAU 1', 93.15, 0.86, 4.63, 1.12],
+            ['LEMBAH KLAU', 89.84, 0.3, 8.66, 1.21],
+            ['LURAH BILUT', 94.21, 0.24, 3.88, 1.6],
+            ['JENDERAK UTARA', 93.26, 1.06, 5.62, 0.05],
+            ['JENDERAK SELATAN', 95.8, 0.7, 3.5, 0],
+            ['SUNGAI KOYAN 1', 97.01, 0, 2.99, 0],
+            ['SUNGAI KOYAN 3', 97.37, 0.01, 2.43, 0.19],
+            ['TERSANG 1', 92.26, 0.22, 7.1, 0.41],
+            ['TERSANG 2', 92.03, 0.28, 7.44, 0.25],
+            ['TERSANG 3', 90.3, 0.57, 8.9, 0.23],
+            ['TERSANG 4', 89.37, 0.78, 9.45, 0.4],
+            ['BUKIT PUCHONG', 97.4, 0.57, 1.71, 0.33],
+            ['MENGKUANG', 97.36, 0.69, 1.69, 0],
+            ['BUKIT MENDI', 96.21, 0.51, 2.59, 0.69],
+            ['CHEMOMOI', 85.38, 2.75, 11.36, 0.51],
+            ['KEMASUL', 88.76, 2.39, 8.1, 0.72],
+            ['TEMBANGAU 1', 94.62, 0.56, 4.42, 0.34],
+            ['TEMBANGAU 2', 95.14, 0.49, 3.97, 0.38],
+            ['MAYAM', 92.7, 2.21, 5.07, 0.03],
+            ['BUKIT KEPAYANG', 96.21, 0.63, 3.01, 0.15],
+            ['TEMENTI', 85.02, 2.79, 12.15, 0.04],
+            ['RENTAM', 82.5, 3.92, 13.56, 0.03],
+            ['PURUN', 91.92, 1.52, 5.36, 0.05],
+            ['SEBERTAK', 89.12, 1.9, 8.83, 0.15],
+            ['KUMAI', 85.11, 3.37, 11.44, 0.07],
+            ['TRIANG 1', 89.17, 1.6, 8.85, 0.39],
+            ['TRIANG 3', 89.37, 2.04, 8.53, 0.02],
+            ['CHEGAR PERAH 1', 96.41, 0.4, 1.59, 1.59]
+        ];
+        document.getElementById('btsBody').innerHTML = btsData.map((r, i) =>
+            '<tr><td>' + (i + 1) + '</td><td><strong>' + r[0] + '</strong></td><td class="hi">' + r[1] +
+            '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>').join('') +
+            '<tr class="row-total"><td colspan="2"><strong>Purata</strong></td><td class="hi"><strong>90.06</strong></td><td><strong>1.18</strong></td><td><strong>8.22</strong></td><td><strong>0.46</strong></td></tr>';
+
+        // CHARTS
+        const charts = {};
+        (function() {
+            const c = document.getElementById('chartZon');
+            if (c) charts.z = new Chart(c, {
+                type: 'bar',
+                data: {
+                    labels: ['Koyan', 'Mempaga', 'Mendi', 'Bera', 'Pembangunan'],
+                    datasets: [{ label: 'Ha', data: [6271, 8194, 5005, 6033, 1204],
+                        backgroundColor: ['#1a5f2a', '#f0a500', '#2d8a4e', '#c79100', '#8b4513'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { title: { display: true, text: 'Hektar' } } } }
+            });
+        })();
+        (function() {
+            const c = document.getElementById('chartBTS');
+            if (c) charts.b = new Chart(c, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Masak 90.06%', 'Mengkal 8.22%', 'Muda 1.18%'],
+                    datasets: [{ data: [90.06, 8.22, 1.18], backgroundColor: ['#2d8a4e', '#f0a500',
+                            '#c62828'
+                        ] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        })();
+    </script>
+</body>
+</html>
