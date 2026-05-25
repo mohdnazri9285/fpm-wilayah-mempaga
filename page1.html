@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FPMSB Wilayah Mempaga - Dashboard 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
         :root {
             --bg: #f4f6f9;
@@ -104,6 +105,8 @@
 </div>
 
 <script>
+    Chart.register(ChartDataLabels);
+
     const profileUmur = [
         {kat:'IMMATURE', umur:'0-3', peneroka:2269.29, tambahan:3.00, felda:85.64, total:2357.92, pct:11},
         {kat:'YOUNG', umur:'4-9', peneroka:2708.22, tambahan:18.84, felda:155.28, total:2882.34, pct:14},
@@ -112,7 +115,7 @@
         {kat:'VERY OLD', umur:'>23', peneroka:1194.62, tambahan:7.36, felda:123.82, total:1325.81, pct:6}
     ];
 
-    // Carta Staf (label ditambah)
+    // Carta Staf
     new Chart(document.getElementById('chartStaff'), {
         type: 'bar',
         data: {
@@ -127,13 +130,16 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#333',
+                    font: { weight: 'bold' }
+                }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Bilangan Kakitangan' }
-                }
+                y: { beginAtZero: true, title: { display: true, text: 'Bilangan Kakitangan' } }
             }
         }
     });
@@ -153,13 +159,17 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#333',
+                    font: { weight: 'bold' },
+                    formatter: v => v.toLocaleString()
+                }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Hektar (Ha)' }
-                }
+                y: { beginAtZero: true, title: { display: true, text: 'Hektar (Ha)' } }
             }
         }
     });
@@ -179,24 +189,27 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#333',
+                    font: { weight: 'bold' },
+                    formatter: v => v.toLocaleString()
+                }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Hektar (Ha)' }
-                }
+                y: { beginAtZero: true, title: { display: true, text: 'Hektar (Ha)' } }
             }
         }
     });
 
-    // Carta Donut Umur (dengan label)
+    // Carta Donut Umur
     new Chart(document.getElementById('chartUmur'), {
         type: 'doughnut',
         data: {
             labels: profileUmur.map(u => u.kat),
             datasets: [{
-                label: 'Keluasan (Ha)',
                 data: profileUmur.map(u => u.total),
                 backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#8b4513','#c62828']
             }]
@@ -205,7 +218,12 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { position: 'bottom' },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 14 },
+                    formatter: (value, ctx) => ctx.chart.data.labels[ctx.dataIndex] + '\n' + value + ' Ha'
+                }
             }
         }
     });
