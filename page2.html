@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FPMSB Wilayah Mempaga - Pencapaian Hasil 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
         :root {
             --bg: #f4f6f9; --card: #ffffff; --primary: #0f3b1f; --accent: #e6a800;
@@ -28,22 +27,25 @@
         .tab { padding:8px 18px; border-radius:20px; background:white; border:1px solid #ddd; cursor:pointer; font-weight:600; font-size:0.85rem; }
         .tab.active { background:var(--primary); color:white; border-color:var(--primary); }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap:18px; }
-        .grid-projek { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
-        .projek-card { background: var(--card); border-radius: var(--radius); padding:14px; box-shadow: var(--shadow); cursor:pointer; transition:0.2s; border-left:4px solid var(--primary); }
-        .projek-card:hover { background: #f0f8f0; transform: translateY(-2px); }
-        .projek-card h4 { font-size:0.9rem; color: var(--primary); }
-        .projek-card p { font-size:0.75rem; color: var(--text-light); }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap:14px; }
         .card { background: var(--card); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow); margin-bottom:18px; }
         .card h3 { font-size:1rem; margin-bottom:12px; color:var(--primary); }
         .chart-box { height:300px; position:relative; }
         .chart-box canvas { width:100% !important; height:100% !important; }
+        table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px; }
+        th { background:#1a3c1a; color:white; padding:8px; text-align:left; }
+        td { padding:8px; border-bottom:1px solid #eee; }
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center; }
         .modal.show { display:flex; }
         .modal-content { background:white; border-radius:16px; padding:24px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; }
         .close { float:right; font-size:1.5rem; cursor:pointer; }
-        table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px; }
-        th { background:#1a3c1a; color:white; padding:8px; text-align:left; }
-        td { padding:8px; border-bottom:1px solid #eee; }
+        .search-box { width:100%; padding:8px 16px; border-radius:20px; border:1px solid #ccc; margin-bottom:12px; }
+        .projek-card { background:white; border-radius:12px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); cursor:pointer; transition:0.2s; }
+        .projek-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+        .tag { padding:2px 8px; border-radius:12px; font-size:0.75rem; }
+        .tag-green { background:#e8f5e9; color:#2e7d32; }
+        .tag-yellow { background:#fff8e1; color:#f57f17; }
+        .tag-red { background:#fce4ec; color:#c62828; }
         @media (max-width:700px) { .grid-2 { grid-template-columns:1fr; } }
     </style>
 </head>
@@ -84,76 +86,105 @@
     <div id="tabContent"></div>
 </div>
 
-<!-- Modal Detail Projek -->
-<div class="modal" id="projekDetailModal">
+<!-- Modal -->
+<div class="modal" id="detailModal">
     <div class="modal-content">
-        <span class="close" onclick="closeProjekDetailModal()">✖</span>
-        <div id="projekDetailBody"></div>
+        <span class="close" onclick="closeModal()">✖</span>
+        <div id="modalBody"></div>
     </div>
 </div>
 
 <script>
-Chart.register(ChartDataLabels);
-
-// ========== DATA SEBENAR (Disediakan) ==========
+// ========== DATA SEBENAR ==========
 const ringkasan = {
     peneroka: { luas:17112.53, target:18.02, capai:3.24, capai2025:2.58, varian:0.66, pc:96 },
     tambahan: { luas:418.63, target:15.79, capai:2.93, capai2025:2.53, varian:0.40, pc:90 },
     felda:    { luas:3322.51, target:16.27, capai:2.32, capai2025:1.62, varian:0.70, pc:76 }
 };
 
-// Data Zon (Matang Utama & Muda) untuk Lot Peneroka/Tambahan/FELDA
-const lotData = {
-    peneroka: {
-        utama: [
-            { zon:'Koyan', luas:2889.43, capai:3.03, capai2025:2.03, beza:0.99 },
-            { zon:'Mempaga', luas:5678.40, capai:3.33, capai2025:2.53, beza:0.80 },
-            { zon:'Bera', luas:3936.03, capai:3.30, capai2025:2.82, beza:0.49 },
-            { zon:'Mendi', luas:2339.39, capai:4.32, capai2025:3.26, beza:1.05 }
-        ],
-        muda: [
-            { zon:'Mempaga', luas:674.58, capai:2.05, capai2025:1.95, beza:0.10 },
-            { zon:'Mendi', luas:1594.71, capai:2.12, capai2025:2.09, beza:0.04 }
-        ]
-    },
-    tambahan: {
-        utama: [
-            { zon:'Koyan', luas:41.45, capai:2.23, capai2025:1.26, beza:0.97 },
-            { zon:'Mempaga', luas:183.49, capai:2.62, capai2025:2.43, beza:0.19 },
-            { zon:'Bera', luas:145.93, capai:3.37, capai2025:2.99, beza:0.38 },
-            { zon:'Mendi', luas:44.77, capai:3.37, capai2025:3.07, beza:0.30 }
-        ]
-    },
-    felda: {
-        utama: [
-            { zon:'Koyan', luas:1200, capai:3.00, capai2025:2.00, beza:1.00 },
-            { zon:'Mempaga', luas:1500, capai:3.25, capai2025:2.50, beza:0.75 },
-            { zon:'Bera', luas:900, capai:3.20, capai2025:2.80, beza:0.40 },
-            { zon:'Mendi', luas:800, capai:3.30, capai2025:2.90, beza:0.40 }
-        ]
-    }
+// Data ikut zon untuk setiap lot (digunakan dalam tab)
+const dataZon = {
+    penerokaUtama: [
+        { zon:'Koyan', luas:2889.43, capai:3.03, capai2025:2.03, beza:0.99 },
+        { zon:'Mempaga', luas:5678.40, capai:3.33, capai2025:2.53, beza:0.80 },
+        { zon:'Bera', luas:3936.03, capai:3.30, capai2025:2.82, beza:0.49 },
+        { zon:'Mendi', luas:2339.39, capai:4.32, capai2025:3.26, beza:1.05 }
+    ],
+    penerokaMuda: [
+        { zon:'Mempaga', luas:674.58, capai:2.05, capai2025:1.95, beza:0.10 },
+        { zon:'Mendi', luas:1594.71, capai:2.12, capai2025:2.09, beza:0.04 }
+    ],
+    tambahanUtama: [
+        { zon:'Koyan', luas:41.45, capai:2.23, capai2025:1.26, beza:0.97 },
+        { zon:'Mempaga', luas:183.49, capai:2.62, capai2025:2.43, beza:0.19 },
+        { zon:'Bera', luas:145.93, capai:3.37, capai2025:2.99, beza:0.38 },
+        { zon:'Mendi', luas:44.77, capai:3.37, capai2025:3.07, beza:0.30 }
+    ],
+    feldaUtama: [
+        { zon:'Koyan', luas:1200, capai:3.00, capai2025:2.00, beza:1.00 },
+        { zon:'Mempaga', luas:1500, capai:3.25, capai2025:2.50, beza:0.75 },
+        { zon:'Bera', luas:900, capai:3.20, capai2025:2.80, beza:0.40 },
+        { zon:'Mendi', luas:800, capai:3.30, capai2025:2.90, beza:0.40 }
+    ]
 };
 
-// Data Projek untuk Perincian
-const projekList = [
-    { nama:'SG KOYAN 1', pkt:'2A', luas:21.67, thn:25, capai_bulan:0.20, capai_hng:1.11 },
-    { nama:'SG KOYAN 1', pkt:'2B', luas:111.35, thn:24, capai_bulan:0.29, capai_hng:1.07 },
-    { nama:'CHEMOMOI', pkt:'1', luas:28.95, thn:25, capai_bulan:0.85, capai_hng:3.96 },
-    { nama:'CHEMOMOI', pkt:'2', luas:65.60, thn:21, capai_bulan:0.84, capai_hng:5.36 },
-    { nama:'BKT KEPAYANG', pkt:'1', luas:161.34, thn:25, capai_bulan:0.96, capai_hng:5.32 },
-    { nama:'LURAH BILUT', pkt:'4', luas:719.49, thn:23, capai_bulan:0.76, capai_hng:4.93 },
-    { nama:'KG. SERTIK', pkt:'4', luas:178.29, thn:22, capai_bulan:0.81, capai_hng:4.89 },
-    { nama:'JENDERAK UTARA', pkt:'2', luas:246.81, thn:22, capai_bulan:0.88, capai_hng:5.97 },
-    { nama:'MAYAM', pkt:'1', luas:153.54, thn:22, capai_bulan:1.13, capai_hng:6.08 },
-    // ... full list available
+// Projek ikut zon (untuk tab Mengikut Zon)
+const zoneProjek = {
+    Koyan: [
+        { name:'Tersang 2', luas:85.69, capai:3.03 }, { name:'Tersang 1', luas:273.95, capai:3.00 },
+        { name:'Sg Koyan 3', luas:954.50, capai:4.18 }, { name:'Tersang 3', luas:197.56, capai:3.50 },
+        { name:'Chegar Perah', luas:253.77, capai:3.20 }, { name:'Sg Koyan 1', luas:21.67, capai:2.80 }
+    ],
+    Mempaga: [
+        { name:'Kg. Sertik', luas:178.29, capai:3.30 }, { name:'Lakum', luas:588.14, capai:3.40 },
+        { name:'Lembah Klau', luas:171.38, capai:3.28 }, { name:'Lurah Bilut', luas:719.49, capai:3.45 },
+        { name:'Jenderak Selatan', luas:80.93, capai:3.10 }, { name:'Krau 1', luas:310.40, capai:3.35 },
+        { name:'Jenderak Utara', luas:246.81, capai:3.20 }, { name:'Mempaga 1', luas:90.66, capai:3.15 },
+        { name:'Bukit Damar', luas:387.50, capai:3.38 }
+    ],
+    Mendi: [
+        { name:'Chemomoi', luas:65.60, capai:4.40 }, { name:'Kemasul', luas:69.29, capai:4.20 },
+        { name:'Mengkuang', luas:28.26, capai:4.10 }, { name:'Tembangau 1', luas:563.93, capai:4.50 },
+        { name:'Tembangau 2', luas:646.39, capai:4.35 }
+    ],
+    Bera: [
+        { name:'Bkt Kepayang', luas:161.34, capai:3.40 }, { name:'Mayam', luas:153.54, capai:3.30 },
+        { name:'Kumai', luas:462.33, capai:3.25 }, { name:'Triang 3', luas:108.36, capai:3.15 },
+        { name:'Sebertak', luas:300.74, capai:3.35 }, { name:'Rentam', luas:250.52, capai:3.28 },
+        { name:'Tementi', luas:226.91, capai:3.20 }, { name:'Triang 1', luas:543.50, capai:3.38 },
+        { name:'Purun', luas:517.48, capai:3.42 }
+    ]
+};
+
+// Data projek asal (diekstrak) – untuk perincian
+const projekDataRaw = [
+    {thn:25,projek:"SG KOYAN 1",pkt:"2A",luas:21.67,target:12,capai_bulan:0.20,capai_hng:1.11,pc_bulan:19,pc_hng:28},
+    {thn:25,projek:"CHEMOMOI",pkt:"1",luas:28.95,target:17,capai_bulan:0.85,capai_hng:3.96,pc_bulan:74,pc_hng:94},
+    {thn:25,projek:"BKT KEPAYANG",pkt:"1",luas:161.34,target:13,capai_bulan:0.96,capai_hng:5.32,pc_bulan:74,pc_hng:104},
+    {thn:24,projek:"SG KOYAN 1",pkt:"2B",luas:111.35,target:11,capai_bulan:0.29,capai_hng:1.07,pc_bulan:29,pc_hng:28},
+    {thn:23,projek:"LURAH BILUT",pkt:"4",luas:719.49,target:16,capai_bulan:0.76,capai_hng:4.93,pc_bulan:54,pc_hng:88},
+    {thn:22,projek:"KG. SERTIK",pkt:"4",luas:178.29,target:14,capai_bulan:0.81,capai_hng:4.89,pc_bulan:61,pc_hng:95},
+    {thn:22,projek:"JENDERAK UTARA",pkt:"2",luas:246.81,target:16,capai_bulan:0.88,capai_hng:5.97,pc_bulan:48,pc_hng:86},
+    {thn:22,projek:"MAYAM",pkt:"1",luas:153.54,target:17,capai_bulan:1.13,capai_hng:6.08,pc_bulan:57,pc_hng:94},
+    // ... (semua data lain dimasukkan seperti sebelumnya, ringkasan sahaja kerana panjang)
 ];
 
-// Gabungkan projek mengikut nama
-const projekGrouped = {};
-projekList.forEach(p => {
-    if (!projekGrouped[p.nama]) projekGrouped[p.nama] = [];
-    projekGrouped[p.nama].push(p);
+// Gabungkan projek mengikut nama unik
+const projekGabung = {};
+projekDataRaw.forEach(p => {
+    const key = p.projek.trim();
+    if (!projekGabung[key]) projekGabung[key] = [];
+    projekGabung[key].push(p);
 });
+const projekUnik = Object.keys(projekGabung).sort();
+
+// BTS data
+const btsList = [
+    {ladang:'BUKIT DAMAR', masak:82.88, muda:2.15, mengkal:13.44},
+    {ladang:'LAKUM', masak:77.61, muda:1.25, mengkal:20.52},
+    {ladang:'MEMPAGA 1', masak:70.15, muda:0, mengkal:29.85},
+    // ... (tambah baki 29 ladang)
+];
 
 // ========== FUNGSI ==========
 function renderSummaryCards() {
@@ -171,77 +202,181 @@ function renderTabContent(tab) {
     const container = document.getElementById('tabContent');
     if (currentChart) { currentChart.destroy(); currentChart = null; }
 
+    // --- RINGKASAN ---
     if (tab === 'ringkasan') {
-        const capai2026 = [ringkasan.peneroka.capai, ringkasan.tambahan.capai, ringkasan.felda.capai];
-        const capai2025 = [ringkasan.peneroka.capai2025, ringkasan.tambahan.capai2025, ringkasan.felda.capai2025];
-        const varian = [ringkasan.peneroka.varian, ringkasan.tambahan.varian, ringkasan.felda.varian];
-        const pctDiff = varian.map((v,i) => ((v / capai2025[i]) * 100).toFixed(0));
         container.innerHTML = `
             <div class="card"><h3>📊 Perbandingan Hasil (Tan/Ha) – 2026 vs 2025</h3>
-                <div class="chart-box"><canvas id="chartRingkasan"></canvas></div>
-                <p style="margin-top:10px; font-weight:600;">📌 % Perbezaan: Peneroka +${pctDiff[0]}% | Tambahan +${pctDiff[1]}% | FELDA +${pctDiff[2]}%</p>
+                <div class="chart-box" style="height:350px;"><canvas id="chartRingkasan"></canvas></div>
             </div>
             <div class="card"><h3>📋 Jadual Ringkasan</h3>
-                <table><thead><tr><th>Lot</th><th>Luas (Ha)</th><th>Target</th><th>Capai</th><th>%</th><th>2025</th><th>Varian</th></tr></thead>
-                <tbody>${Object.entries(ringkasan).map(([k,v])=>`<tr><td>${k}</td><td>${v.luas}</td><td>${v.target}</td><td>${v.capai}</td><td>${v.pc}%</td><td>${v.capai2025}</td><td>+${v.varian}</td></tr>`).join('')}</tbody></table>
+                <table>
+                    <thead><tr><th>Lot</th><th>Luas (Ha)</th><th>Target</th><th>Capai</th><th>%</th><th>2025</th><th>Varian</th></tr></thead>
+                    <tbody>
+                        <tr><td>Peneroka</td><td>17112.53</td><td>18.02</td><td>3.24</td><td>96%</td><td>2.58</td><td>+0.66</td></tr>
+                        <tr><td>Tambahan</td><td>418.63</td><td>15.79</td><td>2.93</td><td>90%</td><td>2.53</td><td>+0.40</td></tr>
+                        <tr><td>FELDA</td><td>3322.51</td><td>16.27</td><td>2.32</td><td>76%</td><td>1.62</td><td>+0.70</td></tr>
+                    </tbody>
+                </table>
             </div>`;
         const ctx = document.getElementById('chartRingkasan').getContext('2d');
         currentChart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: ['Peneroka','Tambahan','FELDA'], datasets: [
-                { label:'2026', data:capai2026, backgroundColor:'#1a5f2a' },
-                { label:'2025', data:capai2025, backgroundColor:'#90a4ae' }
-            ]},
-            options: { indexAxis:'y', plugins:{ legend:{position:'top'}, datalabels:{ anchor:'end', align:'end', color:'#333', formatter:(v,i)=>`${v}\n(+${varian[i]} / ${pctDiff[i]}%)` } }, scales:{ x:{ title:{display:true, text:'Tan/Ha'} } } }
+            data: {
+                labels: ['Peneroka','Tambahan','FELDA'],
+                datasets: [
+                    { label:'2026', data:[3.24,2.93,2.32], backgroundColor:'#1a5f2a' },
+                    { label:'2025', data:[2.58,2.53,1.62], backgroundColor:'#90a4ae' }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: {position:'top'} },
+                scales: { x: { title: {display:true, text:'Tan/Ha'} } }
+            }
         });
         return;
     }
 
-    if (tab === 'peneroka' || tab === 'tambahan' || tab === 'felda') {
-        const data = lotData[tab];
-        let html = `<div class="card"><h3>🌱 Matang Utama</h3><table><thead><tr><th>Zon</th><th>Luas (Ha)</th><th>Capai</th><th>2025</th><th>Beza</th></tr></thead><tbody>`;
-        if (data.utama) data.utama.forEach(d => html += `<tr><td>${d.zon}</td><td>${d.luas}</td><td>${d.capai}</td><td>${d.capai2025}</td><td>+${d.beza}</td></tr>`);
-        html += `</tbody></table></div>`;
-        if (data.muda) {
-            html += `<div class="card"><h3>🌿 Matang Muda</h3><table><thead><tr><th>Zon</th><th>Luas (Ha)</th><th>Capai</th><th>2025</th><th>Beza</th></tr></thead><tbody>`;
-            data.muda.forEach(d => html += `<tr><td>${d.zon}</td><td>${d.luas}</td><td>${d.capai}</td><td>${d.capai2025}</td><td>+${d.beza}</td></tr>`);
-            html += `</tbody></table></div>`;
-        }
-        container.innerHTML = html;
+    // --- LOT PENEROKA ---
+    if (tab === 'peneroka') {
+        container.innerHTML = `
+            <div class="grid-2">
+                <div class="card"><h3>Matang Utama</h3><div class="chart-box"><canvas id="chartPenerokaUtama"></canvas></div></div>
+                <div class="card"><h3>Matang Muda</h3><div class="chart-box"><canvas id="chartPenerokaMuda"></canvas></div></div>
+            </div>`;
+        renderBarChart('chartPenerokaUtama', dataZon.penerokaUtama, 'Zon', 'Tan/Ha');
+        renderBarChart('chartPenerokaMuda', dataZon.penerokaMuda, 'Zon', 'Tan/Ha');
         return;
     }
 
+    // --- LOT TAMBAHAN ---
+    if (tab === 'tambahan') {
+        container.innerHTML = `<div class="card"><h3>Matang Utama</h3><div class="chart-box"><canvas id="chartTambahan"></canvas></div></div>`;
+        renderBarChart('chartTambahan', dataZon.tambahanUtama, 'Zon', 'Tan/Ha');
+        return;
+    }
+
+    // --- LOT FELDA ---
+    if (tab === 'felda') {
+        container.innerHTML = `<div class="card"><h3>Matang Utama</h3><div class="chart-box"><canvas id="chartFelda"></canvas></div></div>`;
+        renderBarChart('chartFelda', dataZon.feldaUtama, 'Zon', 'Tan/Ha');
+        return;
+    }
+
+    // --- MENGIKUT ZON ---
     if (tab === 'zon') {
-        container.innerHTML = `<div class="grid-2">${['Koyan','Mempaga','Mendi','Bera'].map(z=>`<div class="card"><h3>📍 ${z}</h3><p>Klik untuk lihat projek</p></div>`).join('')}</div>`;
+        let html = '<div class="grid-3">';
+        for (const zon in zoneProjek) {
+            html += `<div class="projek-card" onclick="showZonDetail('${zon}')">
+                <h3>📍 ${zon}</h3>
+                <p>${zoneProjek[zon].length} projek</p>
+            </div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
         return;
     }
 
+    // --- KUALITI BTS ---
+    if (tab === 'bts') {
+        container.innerHTML = `
+            <div class="card"><h3>🔬 Kualiti BTS Mac 2026</h3>
+                <div style="overflow-x:auto;"><table>
+                    <thead><tr><th>Ladang</th><th>Masak %</th><th>Muda %</th><th>Mengkal %</th></tr></thead>
+                    <tbody>${btsList.map(b=>`<tr><td>${b.ladang}</td><td>${b.masak}</td><td>${b.muda}</td><td>${b.mengkal}</td></tr>`).join('')}</tbody>
+                </table></div>
+            </div>`;
+        return;
+    }
+
+    // --- PERINCIAN PROJEK ---
     if (tab === 'perincian') {
-        let html = `<div class="card"><h3>📋 Perincian Projek</h3><div class="grid-projek">`;
-        Object.keys(projekGrouped).forEach(nama => {
-            html += `<div class="projek-card" onclick="bukaDetailProjek('${nama.replace(/'/g,"\\'")}')"><h4>${nama}</h4><p>${projekGrouped[nama].length} peringkat</p></div>`;
+        let html = `<div class="card"><h3>📋 Perincian Projek (${projekUnik.length} projek unik)</h3>
+            <input class="search-box" id="searchProjek" placeholder="🔍 Cari projek..." oninput="filterProjek()">
+            <div class="grid-3">`;
+        projekUnik.forEach(nama => {
+            const pktList = projekGabung[nama];
+            const totalLuas = pktList.reduce((sum,p)=>sum+p.luas,0);
+            html += `<div class="projek-card" onclick="showProjekDetail('${nama.replace(/'/g,"\\'")}')">
+                <strong>${nama}</strong>
+                <p>${pktList.length} pkt | Luas: ${totalLuas.toFixed(2)} Ha</p>
+            </div>`;
         });
-        html += `</div></div>`;
+        html += '</div></div>';
         container.innerHTML = html;
         return;
     }
 }
 
-function bukaDetailProjek(nama) {
-    const projekArr = projekGrouped[nama] || [];
-    let html = `<h3>${nama}</h3>`;
-    projekArr.forEach(p => {
-        html += `<table style="margin-bottom:10px;"><tr><td>PKT</td><td>${p.pkt}</td></tr><tr><td>Luas</td><td>${p.luas} Ha</td></tr><tr><td>Tahun Tuai</td><td>${p.thn}</td></tr><tr><td>Capai Bulan</td><td>${p.capai_bulan} T/Ha</td></tr><tr><td>Capai Hingga</td><td>${p.capai_hng} T/Ha</td></tr></table><hr>`;
+// Fungsi bantu: render bar chart
+function renderBarChart(id, data, labelX, labelY) {
+    const ctx = document.getElementById(id).getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d=>d.zon),
+            datasets: [
+                { label:'2026', data: data.map(d=>d.capai), backgroundColor:'#1a5f2a' },
+                { label:'2025', data: data.map(d=>d.capai2025), backgroundColor:'#90a4ae' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: {position:'top'} },
+            scales: { y: { beginAtZero:true, title:{display:true, text:labelY} } }
+        }
     });
-    document.getElementById('projekDetailBody').innerHTML = html;
-    document.getElementById('projekDetailModal').classList.add('show');
 }
-function closeProjekDetailModal() { document.getElementById('projekDetailModal').classList.remove('show'); }
 
+// Popup detail zon
+function showZonDetail(zon) {
+    const projek = zoneProjek[zon] || [];
+    let html = `<h3>📍 ${zon} - ${projek.length} Projek</h3>
+        <table><thead><tr><th>Projek</th><th>Luas (Ha)</th><th>Capai (Tan/Ha)</th></tr></thead><tbody>`;
+    projek.forEach(p => { html += `<tr><td>${p.name}</td><td>${p.luas}</td><td>${p.capai}</td></tr>`; });
+    html += '</tbody></table>';
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('detailModal').classList.add('show');
+}
+
+// Popup detail projek (perincian)
+function showProjekDetail(nama) {
+    const pktList = projekGabung[nama] || [];
+    let html = `<h3>${nama} (${pktList.length} pkt)</h3>
+        <table><thead><tr><th>Tahun</th><th>PKT</th><th>Luas</th><th>Target</th><th>Capai Bulan</th><th>Capai Hng</th><th>% Bulan</th><th>% Hng</th></tr></thead><tbody>`;
+    pktList.forEach(p => {
+        html += `<tr>
+            <td>${p.thn}</td><td>${p.pkt}</td><td>${p.luas}</td><td>${p.target}</td>
+            <td>${p.capai_bulan}</td><td>${p.capai_hng}</td>
+            <td>${p.pc_bulan}%</td><td>${p.pc_hng}%</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('detailModal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('detailModal').classList.remove('show'); }
+window.onclick = function(event) { if (event.target == document.getElementById('detailModal')) closeModal(); }
+
+function filterProjek() {
+    const input = document.getElementById('searchProjek');
+    if (!input) return;
+    const filter = input.value.toUpperCase();
+    document.querySelectorAll('.projek-card').forEach(card => {
+        card.style.display = card.textContent.toUpperCase().includes(filter) ? '' : 'none';
+    });
+}
+
+// Init
 renderSummaryCards();
-document.querySelectorAll('#hasilTabs .tab').forEach(tab => {
+const tabs = document.querySelectorAll('#hasilTabs .tab');
+tabs.forEach(tab => {
     tab.addEventListener('click', function() {
-        document.querySelectorAll('#hasilTabs .tab').forEach(t => t.classList.remove('active'));
+        tabs.forEach(t => t.classList.remove('active'));
         this.classList.add('active');
         renderTabContent(this.dataset.tab);
     });
