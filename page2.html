@@ -23,15 +23,15 @@
         .stat-card.accent { border-left-color: var(--accent); }
         .stat-card .val { font-size:1.8rem; font-weight:800; }
         .stat-card .lbl { font-size:0.75rem; color:var(--text-light); margin-top:4px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap:18px; }
-        .card { background: var(--card); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow); margin-bottom:18px; }
-        .card h3 { font-size:1rem; margin-bottom:12px; color:var(--primary); }
-        .chart-box { height:280px; position:relative; }
-        .chart-box canvas { width:100% !important; height:100% !important; }
         .tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
         .tab { padding:8px 18px; border-radius:20px; background:white; border:1px solid #ddd; cursor:pointer; font-weight:600; font-size:0.85rem; }
         .tab.active { background:var(--primary); color:white; border-color:var(--primary); }
-        table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap:18px; }
+        .card { background: var(--card); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow); margin-bottom:18px; }
+        .card h3 { font-size:1rem; margin-bottom:12px; color:var(--primary); }
+        .chart-box { height:300px; position:relative; }
+        .chart-box canvas { width:100% !important; height:100% !important; }
+        table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px; }
         th { background:#1a3c1a; color:white; padding:8px; text-align:left; }
         td { padding:8px; border-bottom:1px solid #eee; }
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center; }
@@ -52,17 +52,19 @@
         <a href="page2.html" class="active">📈 Page 2: Pencapaian Hasil</a>
     </div>
 
-    <!-- Filter Bulan (simulasi) -->
+    <!-- Filter (simulasi) -->
     <div style="display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
-        <span style="font-weight:600;">📅 Filter Bulan:</span>
+        <span style="font-weight:600;">📅 Bulan:</span>
         <input type="month" id="startMonth" value="2026-01">
-        <span>hingga</span>
+        <span>–</span>
         <input type="month" id="endMonth" value="2026-12">
-        <button onclick="alert('Fungsi filter aktif selepas integrasi data sebenar')" style="padding:6px 16px; border-radius:20px; border:1px solid var(--primary); background:white; cursor:pointer;">Guna</button>
+        <button onclick="alert('Fungsi penapisan akan aktif selepas integrasi pangkalan data.')" style="padding:6px 16px; border-radius:20px; border:1px solid var(--primary); background:white; cursor:pointer;">Guna</button>
     </div>
 
+    <!-- KPI -->
     <div class="stats-row" id="hasilSummary"></div>
 
+    <!-- Tab -->
     <div class="tabs" id="hasilTabs">
         <button class="tab active" data-tab="ringkasan">Ringkasan</button>
         <button class="tab" data-tab="peneroka">Lot Peneroka</button>
@@ -75,6 +77,7 @@
     <div id="tabContent"></div>
 </div>
 
+<!-- Modal Projek -->
 <div class="modal" id="projekModal">
     <div class="modal-content">
         <span class="close" onclick="closeModal()">✖</span>
@@ -83,11 +86,39 @@
 </div>
 
 <script>
-const hasilData = {
-    peneroka: { luas:17112.53, target:18.02, capaiKini:3.24, capai2025:2.58, varian:0.66, pc:96 },
-    tambahan: { luas:418.63, target:15.79, capaiKini:2.93, capai2025:2.53, varian:0.40, pc:90 },
-    felda: { luas:3322.51, target:16.27, capaiKini:2.32, capai2025:1.62, varian:0.70, pc:76 }
+// Data sebenar dari slaid
+const ringkasan = {
+    peneroka: { luas:17112.53, target:18.02, capai:3.24, capai2025:2.58, varian:0.66, pc:96 },
+    tambahan: { luas:418.63, target:15.79, capai:2.93, capai2025:2.53, varian:0.40, pc:90 },
+    felda:    { luas:3322.51, target:16.27, capai:2.32, capai2025:1.62, varian:0.70, pc:76 }
 };
+
+// Data zon (matang utama, matang muda, lot tambahan)
+const dataZon = {
+    penerokaUtama: [
+        { zon:'Koyan', luas:2889.43, capai:3.03, capai2025:2.03, beza:0.99 },
+        { zon:'Mempaga', luas:5678.40, capai:3.33, capai2025:2.53, beza:0.80 },
+        { zon:'Bera', luas:3936.03, capai:3.30, capai2025:2.82, beza:0.49 },
+        { zon:'Mendi', luas:2339.39, capai:4.32, capai2025:3.26, beza:1.05 }
+    ],
+    penerokaMuda: [
+        { zon:'Mempaga', luas:674.58, capai:2.05, capai2025:1.95, beza:0.10 },
+        { zon:'Mendi', luas:1594.71, capai:2.12, capai2025:2.09, beza:0.04 }
+    ],
+    tambahanUtama: [
+        { zon:'Koyan', luas:41.45, capai:2.23, capai2025:1.26, beza:0.97 },
+        { zon:'Mempaga', luas:183.49, capai:2.62, capai2025:2.43, beza:0.19 },
+        { zon:'Bera', luas:145.93, capai:3.37, capai2025:2.99, beza:0.38 },
+        { zon:'Mendi', luas:44.77, capai:3.37, capai2025:3.07, beza:0.30 }
+    ],
+    feldaUtama: [
+        { zon:'Koyan', luas:1200, capai:3.00, capai2025:2.00, beza:1.00 },
+        { zon:'Mempaga', luas:1500, capai:3.25, capai2025:2.50, beza:0.75 },
+        { zon:'Bera', luas:900, capai:3.20, capai2025:2.80, beza:0.40 },
+        { zon:'Mendi', luas:800, capai:3.30, capai2025:2.90, beza:0.40 }
+    ]
+};
+
 const zoneProjek = {
     koyan: ['Tersang 2','Tersang 1','Sg Koyan 3','Tersang 3','Chegar Perah','Sg Koyan 1'],
     mempaga: ['Kg. Sertik','Lakum','Lembah Klau','Lurah Bilut','Jenderak Selatan','Krau 1','Jenderak Utara','Mempaga 1','Bukit Damar'],
@@ -95,8 +126,8 @@ const zoneProjek = {
     bera: ['Bkt Kepayang','Mayam','Kumai','Triang 3','Sebertak','Rentam','Tementi','Triang 1','Purun']
 };
 
-function renderSummary() {
-    const s = hasilData;
+function renderSummaryCards() {
+    const s = ringkasan;
     document.getElementById('hasilSummary').innerHTML = `
         <div class="stat-card"><div class="val">${s.peneroka.pc}%</div><div class="lbl">Lot Peneroka</div></div>
         <div class="stat-card accent"><div class="val">${s.tambahan.pc}%</div><div class="lbl">Lot Tambahan</div></div>
@@ -105,50 +136,105 @@ function renderSummary() {
     `;
 }
 
+let currentChart = null;
 function renderTabContent(tab) {
     const container = document.getElementById('tabContent');
+    if (currentChart) { currentChart.destroy(); currentChart = null; }
     switch(tab) {
         case 'ringkasan':
             container.innerHTML = `
-                <div class="card"><h3>📊 Perbandingan Lot</h3><div class="chart-box"><canvas id="chartRingkasan"></canvas></div></div>
-                <div class="card"><h3>📋 Jadual Ringkasan</h3>
+                <div class="card">
+                    <h3>📊 Perbandingan Hasil (Tan/Ha) – 2026 vs 2025</h3>
+                    <div class="chart-box"><canvas id="chartRingkasan"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>📋 Jadual Ringkasan</h3>
                     <table>
-                        <thead><tr><th>Lot</th><th>Luas (Ha)</th><th>Target</th><th>Capai (T/Ha)</th><th>%</th><th>2025</th><th>Varian</th></tr></thead>
+                        <thead><tr><th>Lot</th><th>Luas (Ha)</th><th>Target</th><th>Capai</th><th>%</th><th>2025</th><th>Varian</th></tr></thead>
                         <tbody>
-                            <tr><td>Peneroka</td><td>17112.53</td><td>18.02</td><td>3.24</td><td>96</td><td>2.58</td><td>+0.66</td></tr>
-                            <tr><td>Tambahan</td><td>418.63</td><td>15.79</td><td>2.93</td><td>90</td><td>2.53</td><td>+0.40</td></tr>
-                            <tr><td>FELDA</td><td>3322.51</td><td>16.27</td><td>2.32</td><td>76</td><td>1.62</td><td>+0.70</td></tr>
+                            <tr><td>Peneroka</td><td>17112.53</td><td>18.02</td><td>3.24</td><td>96%</td><td>2.58</td><td>+0.66</td></tr>
+                            <tr><td>Tambahan</td><td>418.63</td><td>15.79</td><td>2.93</td><td>90%</td><td>2.53</td><td>+0.40</td></tr>
+                            <tr><td>FELDA</td><td>3322.51</td><td>16.27</td><td>2.32</td><td>76%</td><td>1.62</td><td>+0.70</td></tr>
                         </tbody>
                     </table>
                 </div>`;
-            new Chart(document.getElementById('chartRingkasan'), {
+            const ctx = document.getElementById('chartRingkasan').getContext('2d');
+            currentChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: ['Peneroka','Tambahan','FELDA'], datasets: [
-                    { label:'2026', data:[3.24,2.93,2.32], backgroundColor:'#1a5f2a' },
-                    { label:'2025', data:[2.58,2.53,1.62], backgroundColor:'#b0bec5' }
-                ] }
+                data: {
+                    labels: ['Peneroka', 'Tambahan', 'FELDA'],
+                    datasets: [
+                        { label: '2026', data: [3.24, 2.93, 2.32], backgroundColor: '#1a5f2a' },
+                        { label: '2025', data: [2.58, 2.53, 1.62], backgroundColor: '#90a4ae' }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', // horizontal bars
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { x: { title: { display: true, text: 'Tan/Ha' } } }
+                }
             });
             break;
+
         case 'peneroka':
-            container.innerHTML = `<p>Detail Lot Peneroka akan dipaparkan di sini (graf & jadual ikut zon).</p>`;
+            container.innerHTML = `
+                <div class="card"><h3>🌱 Lot Peneroka – Matang Utama</h3>
+                    <table>
+                        <thead><tr><th>Zon</th><th>Luas (Ha)</th><th>Capai (T/Ha)</th><th>2025</th><th>Beza</th></tr></thead>
+                        <tbody>${dataZon.penerokaUtama.map(d=>`<tr><td>${d.zon}</td><td>${d.luas}</td><td>${d.capai}</td><td>${d.capai2025}</td><td>+${d.beza}</td></tr>`).join('')}</tbody>
+                    </table>
+                </div>
+                <div class="card"><h3>🌿 Lot Peneroka – Matang Muda</h3>
+                    <table>
+                        <thead><tr><th>Zon</th><th>Luas (Ha)</th><th>Capai (T/Ha)</th><th>2025</th><th>Beza</th></tr></thead>
+                        <tbody>${dataZon.penerokaMuda.map(d=>`<tr><td>${d.zon}</td><td>${d.luas}</td><td>${d.capai}</td><td>${d.capai2025}</td><td>+${d.beza}</td></tr>`).join('')}</tbody>
+                    </table>
+                </div>`;
             break;
+
         case 'tambahan':
-            container.innerHTML = `<p>Detail Lot Tambahan akan dipaparkan di sini.</p>`;
+            container.innerHTML = `
+                <div class="card"><h3>📋 Lot Tambahan – Matang Utama</h3>
+                    <table>
+                        <thead><tr><th>Zon</th><th>Luas (Ha)</th><th>Capai (T/Ha)</th><th>2025</th><th>Beza</th></tr></thead>
+                        <tbody>${dataZon.tambahanUtama.map(d=>`<tr><td>${d.zon}</td><td>${d.luas}</td><td>${d.capai}</td><td>${d.capai2025}</td><td>+${d.beza}</td></tr>`).join('')}</tbody>
+                    </table>
+                </div>`;
             break;
+
         case 'felda':
-            container.innerHTML = `<p>Detail Lot FELDA akan dipaparkan di sini.</p>`;
+            container.innerHTML = `
+                <div class="card"><h3>🏢 Lot FELDA – Matang Utama</h3>
+                    <table>
+                        <thead><tr><th>Zon</th><th>Luas (Ha)</th><th>Capai (T/Ha)</th><th>2025</th><th>Beza</th></tr></thead>
+                        <tbody>${dataZon.feldaUtama.map(d=>`<tr><td>${d.zon}</td><td>${d.luas}</td><td>${d.capai}</td><td>${d.capai2025}</td><td>+${d.beza}</td></tr>`).join('')}</tbody>
+                    </table>
+                </div>`;
             break;
+
         case 'zon':
             container.innerHTML = `<div class="grid-2">${Object.keys(zoneProjek).map(z=>`
                 <div class="card" style="cursor:pointer;" onclick="showZoneDetail('${z}')">
                     <h3>📍 ${z.toUpperCase()}</h3><p>${zoneProjek[z].length} projek</p>
+                    <button class="tab" style="margin-top:6px;">Lihat Projek</button>
                 </div>`).join('')}</div>`;
             break;
+
         case 'bts':
-            container.innerHTML = `<div class="card"><h3>🔬 Kualiti BTS</h3><div class="chart-box"><canvas id="chartBTS"></canvas></div></div>`;
-            new Chart(document.getElementById('chartBTS'), {
+            container.innerHTML = `
+                <div class="card"><h3>🔬 Kualiti BTS</h3>
+                    <div class="chart-box"><canvas id="chartBTS"></canvas></div>
+                </div>`;
+            const ctxBTS = document.getElementById('chartBTS').getContext('2d');
+            currentChart = new Chart(ctxBTS, {
                 type: 'doughnut',
-                data: { labels:['Masak','Mengkal','Muda'], datasets:[{ data:[90.06,8.22,1.18], backgroundColor:['#2d8a4e','#f0a500','#c62828'] }] }
+                data: {
+                    labels: ['Masak (90.06%)','Mengkal (8.22%)','Muda (1.18%)'],
+                    datasets: [{ data: [90.06, 8.22, 1.18], backgroundColor: ['#2d8a4e','#f0a500','#c62828'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
             break;
     }
@@ -156,13 +242,13 @@ function renderTabContent(tab) {
 
 function showZoneDetail(zone) {
     const projek = zoneProjek[zone];
-    document.getElementById('modalBody').innerHTML = `<h3>${zone.toUpperCase()} - Senarai Projek</h3><ul>${projek.map(p=>`<li>${p}</li>`).join('')}</ul>`;
+    document.getElementById('modalBody').innerHTML = `<h3>${zone.toUpperCase()} – Senarai Projek</h3><ul>${projek.map(p=>`<li>${p}</li>`).join('')}</ul>`;
     document.getElementById('projekModal').classList.add('show');
 }
 function closeModal() { document.getElementById('projekModal').classList.remove('show'); }
 
 // Init
-renderSummary();
+renderSummaryCards();
 const tabs = document.querySelectorAll('#hasilTabs .tab');
 tabs.forEach(tab => {
     tab.addEventListener('click', function() {
