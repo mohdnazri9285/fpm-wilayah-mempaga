@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FPMSB Wilayah Mempaga - Dashboard 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Plugin untuk label luar pai -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-labels@1.1.0/dist/chartjs-plugin-labels.min.js"></script>
     <style>
         :root {
             --bg: #f4f6f9; --card: #ffffff; --primary: #0f3b1f; --accent: #e6a800;
@@ -26,16 +27,18 @@
         .stat-card .lbl { font-size:0.75rem; color:var(--text-light); margin-top:4px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap:18px; }
         .card { background: var(--card); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow); margin-bottom:18px; }
-        .card h3 { font-size:1rem; margin-bottom:12px; color:var(--primary); }
-        .chart-box { height:280px; position:relative; cursor:pointer; }
+        .card h3 { font-size:1rem; margin-bottom:12px; color:var(--primary); cursor: default; }
+        .chart-box { height:300px; position:relative; }
         .chart-box canvas { width:100% !important; height:100% !important; }
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center; }
-        .modal.show { display:flex; }
-        .modal-content { background:white; border-radius:16px; padding:24px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
-        .close { float:right; font-size:1.5rem; cursor:pointer; }
-        table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px; }
+        table { width:100%; border-collapse:collapse; font-size:0.85rem; }
         th { background:#1a3c1a; color:white; padding:8px; text-align:left; }
         td { padding:8px; border-bottom:1px solid #eee; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center; }
+        .modal.show { display:flex; }
+        .modal-content { background:white; border-radius:16px; padding:24px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; }
+        .close { float:right; font-size:1.5rem; cursor:pointer; }
+        .clickable { cursor: pointer; }
+        .clickable:hover { background-color: #f0f8f0; }
         @media (max-width:700px) { .grid-2 { grid-template-columns:1fr; } }
     </style>
 </head>
@@ -45,10 +48,12 @@
         <h1>🌴 FPMSB Wilayah Mempaga</h1>
         <span style="background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-weight:600;">16 April 2026</span>
     </div>
+
     <div class="nav-links">
         <a href="page1.html" class="active">📊 Page 1: Dashboard</a>
         <a href="page2.html">📈 Page 2: Pencapaian Hasil</a>
     </div>
+
     <div class="stats-row">
         <div class="stat-card"><div class="val">154</div><div class="lbl">Jumlah Kakitangan</div></div>
         <div class="stat-card accent"><div class="val">23</div><div class="lbl">Field Controller</div></div>
@@ -56,18 +61,20 @@
         <div class="stat-card"><div class="val">73</div><div class="lbl">Field Supervisor</div></div>
         <div class="stat-card"><div class="val">44</div><div class="lbl">Kerani</div></div>
     </div>
+
     <div class="grid-2">
         <div class="card">
             <h3>👥 Kedudukan Kakitangan</h3>
             <div class="chart-box"><canvas id="chartStaff"></canvas></div>
         </div>
-        <div class="card">
+        <div class="card clickable" id="profilPengurusanCard">
             <h3>🌍 Profil Pengurusan 2026 (Klik untuk Detail)</h3>
-            <div class="chart-box" id="chartKawasanContainer"><canvas id="chartKawasan"></canvas></div>
+            <div class="chart-box"><canvas id="chartKawasan"></canvas></div>
         </div>
     </div>
+
     <div class="grid-2">
-        <div class="card">
+        <div class="card clickable" id="zonCard">
             <h3>📍 Keluasan Mengikut Zon (Klik Bar)</h3>
             <div class="chart-box"><canvas id="chartZon"></canvas></div>
         </div>
@@ -76,6 +83,7 @@
             <div class="chart-box"><canvas id="chartUmur"></canvas></div>
         </div>
     </div>
+
     <div class="card">
         <h3>📋 Ringkasan Profil Umur</h3>
         <table id="umurTable">
@@ -85,17 +93,16 @@
     </div>
 </div>
 
-<!-- Modal untuk Profil / Zon -->
+<!-- Modal -->
 <div class="modal" id="detailModal">
     <div class="modal-content">
-        <span class="close" onclick="closeDetailModal()">✖</span>
-        <div id="detailModalBody"></div>
+        <span class="close" onclick="closeModal()">✖</span>
+        <div id="modalBody"></div>
     </div>
 </div>
 
 <script>
-Chart.register(ChartDataLabels);
-
+// Data profil umur
 const profileUmur = [
     {kat:'IMMATURE', umur:'0-3', peneroka:2269.29, tambahan:3.00, felda:85.64, total:2357.92, pct:11},
     {kat:'YOUNG', umur:'4-9', peneroka:2708.22, tambahan:18.84, felda:155.28, total:2882.34, pct:14},
@@ -104,88 +111,157 @@ const profileUmur = [
     {kat:'VERY OLD', umur:'>23', peneroka:1194.62, tambahan:7.36, felda:123.82, total:1325.81, pct:6}
 ];
 
+// Data projek ikut zon (untuk popup)
 const zoneProjekList = {
-    Koyan: [{name:'Tersang 2', luas:85.69},{name:'Tersang 1', luas:273.95},{name:'Sg Koyan 3', luas:954.50},{name:'Tersang 3', luas:197.56},{name:'Chegar Perah', luas:253.77},{name:'Sg Koyan 1', luas:21.67}],
-    Mempaga: [{name:'Kg. Sertik', luas:178.29},{name:'Lakum', luas:588.14},{name:'Lembah Klau', luas:171.38},{name:'Lurah Bilut', luas:719.49},{name:'Jenderak Selatan', luas:80.93},{name:'Krau 1', luas:310.40},{name:'Jenderak Utara', luas:246.81},{name:'Mempaga 1', luas:90.66},{name:'Bukit Damar', luas:387.50}],
-    Mendi: [{name:'Chemomoi', luas:65.60},{name:'Kemasul', luas:69.29},{name:'Mengkuang', luas:28.26},{name:'Tembangau 1', luas:563.93},{name:'Tembangau 2', luas:646.39}],
-    Bera: [{name:'Bkt Kepayang', luas:161.34},{name:'Mayam', luas:153.54},{name:'Kumai', luas:462.33},{name:'Triang 3', luas:108.36},{name:'Sebertak', luas:300.74},{name:'Rentam', luas:250.52},{name:'Tementi', luas:226.91},{name:'Triang 1', luas:543.50},{name:'Purun', luas:517.48}]
+    Koyan: [
+        {name:'Tersang 2', luas:85.69},{name:'Tersang 1', luas:273.95},{name:'Sg Koyan 3', luas:954.50},
+        {name:'Tersang 3', luas:197.56},{name:'Chegar Perah', luas:253.77},{name:'Sg Koyan 1', luas:21.67}
+    ],
+    Mempaga: [
+        {name:'Kg. Sertik', luas:178.29},{name:'Lakum', luas:588.14},{name:'Lembah Klau', luas:171.38},
+        {name:'Lurah Bilut', luas:719.49},{name:'Jenderak Selatan', luas:80.93},{name:'Krau 1', luas:310.40},
+        {name:'Jenderak Utara', luas:246.81},{name:'Mempaga 1', luas:90.66},{name:'Bukit Damar', luas:387.50}
+    ],
+    Mendi: [
+        {name:'Chemomoi', luas:65.60},{name:'Kemasul', luas:69.29},{name:'Mengkuang', luas:28.26},
+        {name:'Tembangau 1', luas:563.93},{name:'Tembangau 2', luas:646.39}
+    ],
+    Bera: [
+        {name:'Bkt Kepayang', luas:161.34},{name:'Mayam', luas:153.54},{name:'Kumai', luas:462.33},
+        {name:'Triang 3', luas:108.36},{name:'Sebertak', luas:300.74},{name:'Rentam', luas:250.52},
+        {name:'Tementi', luas:226.91},{name:'Triang 1', luas:543.50},{name:'Purun', luas:517.48}
+    ]
 };
 
-// Chart Staff
+// Data untuk popup Profil Pengurusan (Matang Utama, Muda, dll.)
+const profilPengurusanData = {
+    'Matang Utama': [
+        {projek:'SG KOYAN 1', luas:21.67},{projek:'CHEMOMOI', luas:28.95},{projek:'BKT KEPAYANG', luas:161.34},
+        {projek:'SG KOYAN 1', luas:111.35},{projek:'LURAH BILUT', luas:719.49},{projek:'KG. SERTIK', luas:178.29},
+        {projek:'JENDERAK UTARA', luas:246.81},{projek:'MAYAM', luas:153.54},{projek:'CHEMOMOI', luas:65.60},
+        // ... tambah semua projek matang utama dari data asal (ringkasan sahaja)
+    ],
+    'Matang Muda': [
+        {projek:'KG. SERTIK', luas:4.66},{projek:'BKT MENDI', luas:370.42},{projek:'SG KEMAHAL', luas:623.57},
+        {projek:'LEMBAH KLAU', luas:300.14},{projek:'BKT PUCHONG', luas:600.73}
+    ],
+    'Penjagaan': [],
+    'Pembangunan': []
+};
+
+// ===== CHART STAFF =====
 new Chart(document.getElementById('chartStaff'), {
     type: 'bar',
-    data: { labels: ['Field Controller','Asst. FC','Field Supervisor','Kerani'], datasets: [{ data: [23,14,73,44], backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#1565c0'] }] },
-    options: { plugins: { datalabels: { anchor:'end', align:'top', color:'#333', font:{weight:'bold'} } }, scales: { y: { beginAtZero:true, title:{display:true, text:'Bilangan'} } } }
+    data: {
+        labels: ['Field Controller','Asst. FC','Field Supervisor','Kerani'],
+        datasets: [{ data: [23,14,73,44], backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#1565c0'] }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero:true, title:{display:true, text:'Bilangan'} } }
+    }
 });
 
-// Chart Kawasan (Profil Pengurusan) - Interaktif
+// ===== CHART KAWASAN (interaktif) =====
 const kawasanLabels = ['Matang Utama','Matang Muda','Penjagaan','Pembangunan'];
 const kawasanData = [18511.10, 2361.91, 3426.06, 1204.03];
 new Chart(document.getElementById('chartKawasan'), {
     type: 'bar',
-    data: { labels: kawasanLabels, datasets: [{ data: kawasanData, backgroundColor: ['#1a5f2a','#f0a500','#2d8a4e','#8b4513'] }] },
+    data: {
+        labels: kawasanLabels,
+        datasets: [{ data: kawasanData, backgroundColor: ['#1a5f2a','#f0a500','#2d8a4e','#8b4513'] }]
+    },
     options: {
         onClick: (e, active) => {
             if (active.length > 0) {
-                bukaPopupProfilKawasan();
+                const idx = active[0].index;
+                const kat = kawasanLabels[idx];
+                showProfilDetail(kat);
             }
         },
-        plugins: { datalabels: { anchor:'end', align:'top', color:'#333', formatter:v=>v.toLocaleString() } },
+        plugins: { legend: { display: false } },
         scales: { y: { beginAtZero:true, title:{display:true, text:'Hektar'} } }
     }
 });
 
-function bukaPopupProfilKawasan() {
-    let html = `<h3>📋 Profil Pengurusan 2026</h3><table><thead><tr><th>Kategori</th><th>Luas (Ha)</th><th>%</th></tr></thead><tbody>`;
-    html += `<tr><td>Matang Utama</td><td>18,511.10</td><td>73%</td></tr>`;
-    html += `<tr><td>Matang Muda</td><td>2,361.91</td><td>9%</td></tr>`;
-    html += `<tr><td>Penjagaan</td><td>3,426.06</td><td>13%</td></tr>`;
-    html += `<tr><td>Pembangunan</td><td>1,204.03</td><td>5%</td></tr>`;
-    html += `<tr style="font-weight:bold;"><td>JUMLAH</td><td>25,503.10</td><td>100%</td></tr></tbody></table>`;
-    document.getElementById('detailModalBody').innerHTML = html;
+function showProfilDetail(kategori) {
+    const data = profilPengurusanData[kategori] || [];
+    let html = `<h3>${kategori} - Senarai Projek</h3>
+        <table><thead><tr><th>Projek</th><th>Luas (Ha)</th></tr></thead><tbody>`;
+    data.forEach(p => {
+        html += `<tr><td>${p.projek}</td><td>${p.luas}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('modalBody').innerHTML = html;
     document.getElementById('detailModal').classList.add('show');
 }
 
-// Chart Zon (Interaktif)
+// ===== CHART ZON (interaktif) =====
+const zonLabels = ['Koyan','Mempaga','Mendi','Bera'];
 new Chart(document.getElementById('chartZon'), {
     type: 'bar',
-    data: { labels: ['Koyan','Mempaga','Mendi','Bera'], datasets: [{ data: [6271.03,8194.07,5004.75,6033.24], backgroundColor: '#1a5f2a' }] },
+    data: {
+        labels: zonLabels,
+        datasets: [{ data: [6271.03,8194.07,5004.75,6033.24], backgroundColor: '#1a5f2a' }]
+    },
     options: {
         onClick: (e, active) => {
-            if (active.length > 0) bukaPopupZon(active[0].index);
+            if (active.length > 0) {
+                const zon = zonLabels[active[0].index];
+                showZonDetail(zon);
+            }
         },
-        plugins: { datalabels: { anchor:'end', align:'top', color:'#333', formatter:v=>v.toLocaleString() } },
+        plugins: { legend: { display: false } },
         scales: { y: { beginAtZero:true, title:{display:true, text:'Hektar'} } }
     }
 });
 
-function bukaPopupZon(idx) {
-    const zon = ['Koyan','Mempaga','Mendi','Bera'][idx];
+function showZonDetail(zon) {
     const projek = zoneProjekList[zon] || [];
-    let html = `<h3>📍 ${zon} – ${projek.length} Projek</h3><ul>`;
-    projek.forEach(p => html += `<li><strong>${p.name}</strong> – ${p.luas} Ha</li>`);
-    html += '</ul>';
-    document.getElementById('detailModalBody').innerHTML = html;
+    let html = `<h3>📍 ${zon} – ${projek.length} Projek</h3>
+        <table><thead><tr><th>Projek</th><th>Luas (Ha)</th></tr></thead><tbody>`;
+    projek.forEach(p => { html += `<tr><td>${p.name}</td><td>${p.luas}</td></tr>`; });
+    html += '</tbody></table>';
+    document.getElementById('modalBody').innerHTML = html;
     document.getElementById('detailModal').classList.add('show');
 }
 
-// Chart Umur (Donut) - Label Luar
+// ===== CHART UMUR (pai dengan label luar) =====
 new Chart(document.getElementById('chartUmur'), {
-    type: 'doughnut',
-    data: { labels: profileUmur.map(u=>u.kat), datasets: [{ data: profileUmur.map(u=>u.total), backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#8b4513','#c62828'] }] },
+    type: 'pie',
+    data: {
+        labels: profileUmur.map(u => u.kat),
+        datasets: [{
+            data: profileUmur.map(u => u.total),
+            backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#8b4513','#c62828']
+        }]
+    },
     options: {
-        layout: { padding: 20 },
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-            legend: { position: 'bottom' },
-            datalabels: { color: '#333', anchor: 'end', align: 'end', offset: 8, font: { weight: 'bold', size: 12 }, formatter: (val, ctx) => ctx.chart.data.labels[ctx.dataIndex] + '\n(' + val + ')' }
+            legend: { display: false },
+            labels: { // chartjs-plugin-labels
+                render: 'label',
+                position: 'outside',
+                textMargin: 8,
+                fontColor: '#000',
+                fontSize: 14
+            }
         }
     }
 });
 
-// Jadual Umur
-document.getElementById('umurTable').querySelector('tbody').innerHTML = profileUmur.map(u => `<tr><td>${u.kat}</td><td>${u.umur}</td><td>${u.peneroka}</td><td>${u.tambahan}</td><td>${u.felda}</td><td>${u.total}</td><td>${u.pct}%</td></tr>`).join('');
+// Isi jadual umur
+document.getElementById('umurTable').querySelector('tbody').innerHTML = profileUmur.map(u => `
+    <tr><td>${u.kat}</td><td>${u.umur}</td><td>${u.peneroka}</td><td>${u.tambahan}</td><td>${u.felda}</td><td>${u.total}</td><td>${u.pct}%</td></tr>
+`).join('');
 
-function closeDetailModal() { document.getElementById('detailModal').classList.remove('show'); }
+function closeModal() { document.getElementById('detailModal').classList.remove('show'); }
+// Klik luar modal untuk tutup
+window.onclick = function(event) { if (event.target == document.getElementById('detailModal')) closeModal(); }
 </script>
 </body>
 </html>
