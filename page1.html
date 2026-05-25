@@ -57,14 +57,13 @@
         <span style="background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-weight:600;">16 April 2026</span>
     </div>
 
-    <!-- Navigasi ringkas -->
+    <!-- Navigasi -->
     <div class="nav-links">
         <a href="page1.html" class="active">📊 Page 1: Dashboard</a>
         <a href="page2.html">📈 Page 2: Pencapaian Hasil</a>
-        <!-- Page lain akan ditambah kemudian -->
     </div>
 
-    <!-- Kedudukan Kakitangan -->
+    <!-- KPI Kakitangan -->
     <div class="stats-row">
         <div class="stat-card"><div class="val">154</div><div class="lbl">Jumlah Kakitangan</div></div>
         <div class="stat-card accent"><div class="val">23</div><div class="lbl">Field Controller</div></div>
@@ -113,37 +112,111 @@
         {kat:'VERY OLD', umur:'>23', peneroka:1194.62, tambahan:7.36, felda:123.82, total:1325.81, pct:6}
     ];
 
-    // Carta Staf
+    // Carta Staf (label ditambah)
     new Chart(document.getElementById('chartStaff'), {
         type: 'bar',
-        data: { labels: ['Field Controller','Asst. FC','Field Supervisor','Kerani'], datasets: [{ data: [23,14,73,44], backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#1565c0'] }] },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, title:{display:true, text:'Bilangan'} } } }
+        data: {
+            labels: ['Field Controller','Asst. FC','Field Supervisor','Kerani'],
+            datasets: [{
+                label: 'Bilangan',
+                data: [23,14,73,44],
+                backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#1565c0']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Bilangan Kakitangan' }
+                }
+            }
+        }
     });
 
     // Carta Kawasan
     new Chart(document.getElementById('chartKawasan'), {
         type: 'bar',
-        data: { labels: ['Matang Utama','Matang Muda','Penjagaan','Pembangunan'], datasets: [{ data: [18511.10,2361.91,3426.06,1204.03], backgroundColor: ['#1a5f2a','#f0a500','#2d8a4e','#8b4513'] }] },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, title:{display:true, text:'Hektar'} } } }
+        data: {
+            labels: ['Matang Utama','Matang Muda','Penjagaan','Pembangunan'],
+            datasets: [{
+                label: 'Keluasan (Ha)',
+                data: [18511.10, 2361.91, 3426.06, 1204.03],
+                backgroundColor: ['#1a5f2a','#f0a500','#2d8a4e','#8b4513']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Hektar (Ha)' }
+                }
+            }
+        }
     });
 
     // Carta Zon
     new Chart(document.getElementById('chartZon'), {
         type: 'bar',
-        data: { labels: ['Koyan','Mempaga','Mendi','Bera'], datasets: [{ data: [6271.03,8194.07,5004.75,6033.24], backgroundColor: '#1a5f2a' }] },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, title:{display:true, text:'Hektar'} } } }
+        data: {
+            labels: ['Koyan','Mempaga','Mendi','Bera'],
+            datasets: [{
+                label: 'Keluasan (Ha)',
+                data: [6271.03, 8194.07, 5004.75, 6033.24],
+                backgroundColor: '#1a5f2a'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Hektar (Ha)' }
+                }
+            }
+        }
     });
 
-    // Carta Donut Umur
+    // Carta Donut Umur (dengan label)
     new Chart(document.getElementById('chartUmur'), {
         type: 'doughnut',
-        data: { labels: profileUmur.map(u=>u.kat), datasets: [{ data: profileUmur.map(u=>u.total), backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#8b4513','#c62828'] }] },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom'} } }
+        data: {
+            labels: profileUmur.map(u => u.kat),
+            datasets: [{
+                label: 'Keluasan (Ha)',
+                data: profileUmur.map(u => u.total),
+                backgroundColor: ['#1a5f2a','#2d8a4e','#f0a500','#8b4513','#c62828']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
     });
 
     // Isi jadual umur
-    document.getElementById('umurTable').querySelector('tbody').innerHTML = profileUmur.map(u=>`
-        <tr><td>${u.kat}</td><td>${u.umur}</td><td>${u.peneroka}</td><td>${u.tambahan}</td><td>${u.felda}</td><td>${u.total}</td><td>${u.pct}%</td></tr>
+    document.getElementById('umurTable').querySelector('tbody').innerHTML = profileUmur.map(u => `
+        <tr>
+            <td>${u.kat}</td><td>${u.umur}</td><td>${u.peneroka}</td>
+            <td>${u.tambahan}</td><td>${u.felda}</td><td>${u.total}</td>
+            <td>${u.pct}%</td>
+        </tr>
     `).join('');
 </script>
 </body>
